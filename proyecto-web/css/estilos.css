@@ -1,0 +1,559 @@
+:root {
+  --verde: #22a90a;
+  --verde-claro: #39d353;
+  --lila: #d9a6f0;
+  --activa: #5a22b5;
+  --texto: #fff;
+  --fuente-titulo: 'Mulish', sans-serif;
+  --fuente-texto: 'Poppins', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  background: #07031f;
+  color: var(--texto);
+  font-family: var(--fuente-texto);
+  min-height: 100vh;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.pantalla {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.pantalla::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1.5px 1.5px at 90px 70px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 150px 125px, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 55px 150px, rgba(255, 255, 255, 0.5), transparent);
+  background-size: 210px 170px;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.pantalla-inicio {
+  background:
+    radial-gradient(ellipse 42% 38% at 50% 0%, rgba(220, 120, 232, 0.95) 0%, rgba(150, 35, 195, 0.65) 55%, transparent 100%),
+    linear-gradient(180deg, #4d0fa3 0%, #2b0a78 42%, #0e0b4d 72%, #050a2e 100%);
+}
+
+.pantalla-pregunta {
+  background:
+    radial-gradient(ellipse 38% 34% at 50% 0%, rgba(160, 70, 190, 0.55) 0%, transparent 100%),
+    radial-gradient(ellipse 30% 40% at 18% 72%, rgba(170, 45, 95, 0.28) 0%, transparent 100%),
+    radial-gradient(ellipse 35% 45% at 88% 62%, rgba(70, 80, 200, 0.38) 0%, transparent 100%),
+    linear-gradient(180deg, #3b0b6c 0%, #1d0a4b 50%, #0c0730 100%);
+}
+
+.contenido,
+.columna {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 0 24px;
+}
+
+.contenido {
+  max-width: 1100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-top: clamp(64px, 11vh, 130px);
+}
+
+.columna {
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: clamp(40px, 8vh, 110px);
+  padding-bottom: 64px;
+}
+
+.logo {
+  display: block;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.45));
+}
+
+.logo-grande {
+  width: 190px;
+  aspect-ratio: 290 / 150;
+}
+
+.logo-chico {
+  width: 130px;
+  aspect-ratio: 290 / 150;
+}
+
+.centrado {
+  margin: 0 auto;
+}
+
+.etiqueta {
+  margin-top: 46px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.9em;
+  padding-left: 0.9em;
+  text-transform: uppercase;
+}
+
+.titulo-inicio,
+.pregunta {
+  font-family: var(--fuente-titulo);
+  line-height: 1.15;
+  text-align: center;
+}
+
+.titulo-inicio {
+  margin-top: 30px;
+  max-width: 940px;
+  font-size: clamp(32px, 4.6vw, 60px);
+}
+
+.titulo-inicio .ligero,
+.pregunta .ligero {
+  font-weight: 300;
+}
+
+.titulo-inicio strong,
+.pregunta strong {
+  font-weight: 800;
+}
+
+.descripcion {
+  margin-top: 34px;
+  max-width: 640px;
+  font-size: clamp(15px, 1.5vw, 19px);
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.boton-principal {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 42px;
+  padding: 18px 38px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--verde);
+  color: var(--texto);
+  font-size: clamp(16px, 1.6vw, 20px);
+  font-weight: 700;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.boton-principal:hover:not(:disabled) {
+  background: #1d960a;
+  transform: translateY(-2px);
+}
+
+.boton-principal:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.flecha {
+  width: 30px;
+  height: 30px;
+}
+
+.error {
+  margin-top: 18px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: rgba(220, 40, 70, 0.25);
+  border: 1px solid rgba(255, 120, 140, 0.6);
+  font-size: 14px;
+}
+
+.tierra {
+  position: absolute;
+  left: 50%;
+  top: 76%;
+  width: 170vw;
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse 60% 22% at 50% 0%, #2c72e6 0%, #14409f 40%, #081a5c 75%, #050d33 100%);
+  box-shadow:
+    0 -4px 22px 2px rgba(110, 185, 255, 0.85),
+    0 -18px 90px 10px rgba(50, 110, 240, 0.45);
+}
+
+.tierra::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-image:
+    radial-gradient(1.5px 1.5px at 10px 12px, rgba(255, 224, 150, 0.9), transparent),
+    radial-gradient(1px 1px at 38px 30px, rgba(150, 200, 255, 0.9), transparent),
+    radial-gradient(2px 2px at 60px 8px, rgba(255, 210, 130, 0.8), transparent),
+    radial-gradient(1px 1px at 22px 48px, rgba(255, 240, 200, 0.7), transparent);
+  background-size: 74px 60px;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 16%);
+  mask-image: linear-gradient(180deg, #000 0%, transparent 16%);
+  opacity: 0.75;
+}
+
+.cabecera {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  width: 100%;
+}
+
+.boton-atras {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(200, 175, 235, 0.75);
+  color: #3a1478;
+  transition: background 0.2s;
+}
+
+.boton-atras:hover {
+  background: rgba(220, 200, 250, 0.95);
+}
+
+.boton-atras svg {
+  width: 24px;
+  height: 24px;
+}
+
+.contador {
+  justify-self: end;
+  font-size: 22px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.08em;
+}
+
+.contador strong {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.progreso {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin-top: 26px;
+}
+
+.segmento {
+  position: relative;
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.relleno {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--verde-claro);
+  transition: width 0.4s ease;
+}
+
+.cohete {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--avance) * 100%);
+  width: 58px;
+  transform: translate(calc(var(--avance) * -100%), -50%);
+  transition: left 0.4s ease, transform 0.4s ease;
+}
+
+.cohete svg {
+  display: block;
+  width: 100%;
+}
+
+.pregunta {
+  width: min(940px, calc(100vw - 48px));
+  margin-top: 62px;
+  font-size: clamp(26px, 3.6vw, 42px);
+}
+
+.alternativas,
+.areas {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  margin-top: 42px;
+}
+
+.alternativa {
+  padding: 34px 24px;
+  border: 1px solid rgba(217, 166, 240, 0.85);
+  border-radius: 10px;
+  background: rgba(8, 3, 38, 0.4);
+  color: var(--texto);
+  font-size: clamp(15px, 1.6vw, 18px);
+  font-weight: 500;
+  text-align: center;
+  transition: background 0.25s, border-color 0.25s, transform 0.2s;
+}
+
+.alternativa:hover:not(:disabled) {
+  background: rgba(90, 34, 181, 0.45);
+  border-color: #f0d0ff;
+  transform: translateY(-2px);
+}
+
+.alternativa:disabled {
+  cursor: default;
+}
+
+.alternativa.activa {
+  background: var(--activa);
+  border-color: #f0d0ff;
+}
+
+.acciones-pregunta {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.acciones-pregunta .boton-principal {
+  margin-top: 34px;
+}
+
+.boton-principal:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.alternativa-casilla {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 26px 24px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.alternativa-casilla input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.alternativa-casilla .marca {
+  position: relative;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--lila);
+  border-radius: 6px;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.alternativa-casilla.activa .marca {
+  background: var(--verde-claro);
+  border-color: var(--verde-claro);
+}
+
+.alternativa-casilla.activa .marca::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 12px;
+  border: solid #07031f;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}
+
+.alternativa-casilla:focus-within {
+  outline: 2px solid #f0d0ff;
+  outline-offset: 2px;
+}
+
+.respuesta-abierta {
+  width: 100%;
+  padding: 22px 24px;
+  border: 1px solid rgba(217, 166, 240, 0.85);
+  border-radius: 10px;
+  background: rgba(8, 3, 38, 0.4);
+  color: var(--texto);
+  font: 500 clamp(15px, 1.6vw, 18px) / 1.5 var(--fuente-texto);
+  resize: vertical;
+}
+
+.respuesta-abierta:focus,
+.campo input:focus {
+  outline: 2px solid #f0d0ff;
+  outline-offset: 2px;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  margin-top: 40px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.campo input {
+  padding: 16px 18px;
+  border: 1px solid rgba(217, 166, 240, 0.85);
+  border-radius: 10px;
+  background: rgba(8, 3, 38, 0.4);
+  color: var(--texto);
+  font: 500 16px var(--fuente-texto);
+}
+
+.formulario .boton-principal {
+  align-self: center;
+  margin-top: 12px;
+}
+
+.formulario .error {
+  text-align: center;
+}
+
+.etiqueta-resultado {
+  margin-top: 34px;
+  font-size: 15px;
+  letter-spacing: 0.6em;
+  padding-left: 0.6em;
+}
+
+.centrado + .etiqueta-resultado + .pregunta {
+  margin-top: 26px;
+}
+
+.area {
+  position: relative;
+  padding: 24px;
+  border: 1px solid rgba(217, 166, 240, 0.5);
+  border-radius: 10px;
+  background: rgba(8, 3, 38, 0.4);
+}
+
+.area.prioridad {
+  border-color: var(--verde-claro);
+  background: rgba(34, 169, 10, 0.12);
+}
+
+.area-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.area-nombre {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.area-nivel {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.niveles {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.nivel {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.nivel.lleno {
+  background: var(--verde-claro);
+}
+
+.area-etiqueta {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: var(--verde);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .etiqueta {
+    letter-spacing: 0.6em;
+    padding-left: 0.6em;
+    font-size: 15px;
+  }
+
+  .logo-chico {
+    width: 100px;
+  }
+
+  .boton-atras {
+    width: 38px;
+    height: 38px;
+  }
+
+  .contador strong {
+    font-size: 28px;
+  }
+
+  .cohete {
+    width: 44px;
+  }
+
+  .alternativa {
+    padding: 26px 16px;
+  }
+
+  .tierra {
+    top: 78%;
+    width: 260vw;
+  }
+}

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Administración | anew pixel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="logo" viewBox="0 0 290 150">
+      <text x="0" y="66" fill="#fff" font-family="Poppins, sans-serif" font-size="70" font-weight="800" letter-spacing="-3">anew</text>
+      <circle cx="214" cy="34" r="20" fill="none" stroke="#fff" stroke-width="8"/>
+      <rect x="199" y="53" width="30" height="11" rx="4" fill="#fff"/>
+      <rect x="58" y="84" width="10" height="10" fill="#fff"/>
+      <rect x="72" y="98" width="10" height="10" fill="#fff"/>
+      <rect x="58" y="112" width="10" height="10" fill="#fff"/>
+      <rect x="72" y="126" width="10" height="10" fill="#fff"/>
+      <text x="82" y="130" fill="#fff" font-family="Poppins, sans-serif" font-size="70" font-weight="800" letter-spacing="-3">pixel</text>
+    </symbol>
+  </svg>
+
+  <header class="cabecera-admin">
+    <div class="marca">
+      <svg class="logo" role="img" aria-label="anew pixel"><use href="#logo"/></svg>
+      <span class="marca-texto">Administración</span>
+    </div>
+    <nav class="pestanas" aria-label="Secciones">
+      <button type="button" data-vista="preguntas">Preguntas</button>
+      <button type="button" data-vista="orden">Orden del formulario</button>
+      <button type="button" data-vista="historial">Historial</button>
+      <button type="button" data-vista="usuarios">Usuarios</button>
+    </nav>
+    <div class="acciones-cabecera">
+      <a class="enlace-sitio" href="/" target="_blank" rel="noopener">Ver formulario ↗</a>
+      <span id="nombre-usuario" class="nombre-usuario"></span>
+      <button id="cambiar-clave" class="boton boton-secundario boton-chico" type="button">Mi contraseña</button>
+      <button id="salir" class="boton boton-secundario boton-chico" type="button">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main id="contenido" class="contenido-admin"></main>
+  <div id="avisos" class="avisos" aria-live="polite"></div>
+
+  <script type="module" src="js/admin/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "diagnosticador-base-de-datos",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning servidor.js",
+    "cargar-preguntas": "node --disable-warning=ExperimentalWarning semilla.js --preguntas",
+    "reiniciar": "node --disable-warning=ExperimentalWarning semilla.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

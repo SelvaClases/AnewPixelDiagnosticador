@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Acceso | anew pixel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="pagina-login">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="logo" viewBox="0 0 290 150">
+      <text x="0" y="66" fill="#fff" font-family="Poppins, sans-serif" font-size="70" font-weight="800" letter-spacing="-3">anew</text>
+      <circle cx="214" cy="34" r="20" fill="none" stroke="#fff" stroke-width="8"/>
+      <rect x="199" y="53" width="30" height="11" rx="4" fill="#fff"/>
+      <rect x="58" y="84" width="10" height="10" fill="#fff"/>
+      <rect x="72" y="98" width="10" height="10" fill="#fff"/>
+      <rect x="58" y="112" width="10" height="10" fill="#fff"/>
+      <rect x="72" y="126" width="10" height="10" fill="#fff"/>
+      <text x="82" y="130" fill="#fff" font-family="Poppins, sans-serif" font-size="70" font-weight="800" letter-spacing="-3">pixel</text>
+    </symbol>
+  </svg>
+
+  <main class="login">
+    <svg class="logo logo-login" role="img" aria-label="anew pixel"><use href="#logo"/></svg>
+
+    <section class="login-tarjeta">
+      <form id="formulario-login" class="campos">
+        <div>
+          <h1>Acceso administradores</h1>
+          <p class="ayuda">Ingresa con tu correo y contraseña.</p>
+        </div>
+        <label class="campo">
+          <span class="campo-etiqueta">Correo</span>
+          <input class="entrada" type="email" name="correo" required autocomplete="username" maxlength="160">
+        </label>
+        <label class="campo">
+          <span class="campo-etiqueta">Contraseña</span>
+          <span class="campo-clave">
+            <input class="entrada" type="password" name="clave" required autocomplete="current-password" maxlength="128">
+            <button class="boton boton-secundario boton-chico ver-clave" type="button" data-ver>Mostrar</button>
+          </span>
+        </label>
+        <p id="error-login" class="error-modal" role="alert" hidden></p>
+        <button id="entrar" class="boton boton-primario boton-ancho" type="submit">Entrar</button>
+      </form>
+
+      <form id="formulario-clave" class="campos" hidden>
+        <div>
+          <h1>Elige tu nueva contraseña</h1>
+          <p class="ayuda">Por seguridad debes cambiar la contraseña antes de continuar. Usa al menos 10 caracteres, con letras y números.</p>
+        </div>
+        <label class="campo">
+          <span class="campo-etiqueta">Contraseña actual</span>
+          <input class="entrada" type="password" id="clave-actual" required autocomplete="current-password" maxlength="128">
+        </label>
+        <label class="campo">
+          <span class="campo-etiqueta">Nueva contraseña</span>
+          <input class="entrada" type="password" id="clave-nueva" required autocomplete="new-password" minlength="10" maxlength="128">
+        </label>
+        <label class="campo">
+          <span class="campo-etiqueta">Repite la nueva contraseña</span>
+          <input class="entrada" type="password" id="clave-repetida" required autocomplete="new-password" minlength="10" maxlength="128">
+        </label>
+        <p id="error-clave" class="error-modal" role="alert" hidden></p>
+        <button id="guardar-clave" class="boton boton-primario boton-ancho" type="submit">Guardar y entrar</button>
+      </form>
+    </section>
+
+    <a class="enlace-sitio" href="/">← Volver al sitio</a>
+  </main>
+
+  <script type="module" src="js/admin/login.js"></script>
+</body>
+</html>
