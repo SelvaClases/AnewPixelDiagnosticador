@@ -7,7 +7,7 @@
     "node": ">=22.13"
   },
   "scripts": {
-    "start": "node --disable-warning=ExperimentalWarning servidor.js",
+    "start": "node --disable-warning=ExperimentalWarning inicio.cjs",
     "cargar-preguntas": "node --disable-warning=ExperimentalWarning semilla.js --preguntas",
     "reiniciar": "node --disable-warning=ExperimentalWarning semilla.js"
   },
