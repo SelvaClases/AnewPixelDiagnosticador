@@ -3,6 +3,8 @@
   --verde-claro: #39d353;
   --lila: #d9a6f0;
   --activa: #5a22b5;
+  --magenta: #b515ae;
+  --magenta-oscuro: #931c8d;
   --texto: #fff;
   --fuente-titulo: 'Mulish', sans-serif;
   --fuente-texto: 'Poppins', sans-serif;
@@ -359,12 +361,12 @@ button {
 }
 
 .alternativa {
-  padding: 34px 24px;
+  padding: 40px 24px;
   border: 1px solid rgba(217, 166, 240, 0.85);
   border-radius: 10px;
   background: rgba(8, 3, 38, 0.4);
   color: var(--texto);
-  font-size: clamp(15px, 1.6vw, 18px);
+  font-size: clamp(17px, 1.9vw, 21px);
   font-weight: 500;
   text-align: center;
   transition: background 0.25s, border-color 0.25s, transform 0.2s;
@@ -392,6 +394,10 @@ button {
 }
 
 .acciones-pregunta .boton-principal {
+  width: 100%;
+  justify-content: center;
+  padding-top: 24px;
+  padding-bottom: 24px;
   margin-top: 34px;
 }
 
@@ -400,12 +406,21 @@ button {
   cursor: not-allowed;
 }
 
+.boton-principal.continuar-multiple {
+  background: var(--magenta);
+}
+
+.boton-principal.continuar-multiple:hover:not(:disabled) {
+  background: var(--magenta-oscuro);
+}
+
 .alternativa-casilla {
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 18px;
-  padding: 26px 24px;
+  padding: 32px 24px;
   text-align: left;
   cursor: pointer;
 }
@@ -418,29 +433,30 @@ button {
 
 .alternativa-casilla .marca {
   position: relative;
+  order: 2;
   flex: none;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   border: 2px solid var(--lila);
   border-radius: 6px;
-  transition: background 0.2s, border-color 0.2s;
+  background: transparent;
+  transition: border-color 0.2s;
 }
 
-.alternativa-casilla.activa .marca {
-  background: var(--verde-claro);
-  border-color: var(--verde-claro);
+.alternativa-casilla .marca::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 2px;
+  background: #fff;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 .alternativa-casilla.activa .marca::after {
-  content: '';
-  position: absolute;
-  left: 6px;
-  top: 2px;
-  width: 6px;
-  height: 12px;
-  border: solid #07031f;
-  border-width: 0 2.5px 2.5px 0;
-  transform: rotate(45deg);
+  opacity: 1;
+  transform: scale(1);
 }
 
 .alternativa-casilla:focus-within {

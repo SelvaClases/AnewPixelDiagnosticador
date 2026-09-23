@@ -199,6 +199,7 @@ export function pintarPregunta({ pregunta, indice, total, areas, previa }, { alS
   pintarTitulo($('pregunta'), pregunta.pregunta);
 
   continuar.parentElement.hidden = pregunta.tipo === 'unica';
+  continuar.classList.toggle('continuar-multiple', pregunta.tipo === 'multiple');
   continuar.onclick = () => alContinuar(actual);
 
   if (pregunta.tipo === 'unica') pintarUnica(pregunta, previa, alSeleccionar);
