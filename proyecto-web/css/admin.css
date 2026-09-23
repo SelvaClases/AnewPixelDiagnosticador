@@ -63,7 +63,6 @@ textarea {
 
 .logo {
   width: 92px;
-  aspect-ratio: 290 / 150;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
 

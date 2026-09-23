@@ -1,6 +1,6 @@
 import { obtenerPreguntas, guardarDiagnostico } from './consultas.js';
 import { agruparPorArea } from './diagnostico.js';
-import { mostrarPantalla, mostrarError, pintarPregunta, pintarResultado } from './vistas.js';
+import { mostrarPantalla, mostrarError, pintarPregunta, pintarResultado, completarProgreso } from './vistas.js';
 
 const PAUSA_AL_RESPONDER = 350;
 const SIN_RESPUESTA = { alternativas: [], texto: '' };
@@ -24,6 +24,7 @@ async function cargarPreguntas() {
 function mostrarPregunta() {
   const pregunta = estado.preguntas[estado.indice];
 
+  mostrarPantalla('cuestionario');
   pintarPregunta(
     {
       pregunta,
@@ -34,7 +35,6 @@ function mostrarPregunta() {
     },
     { alSeleccionar: seleccionar, alContinuar: continuar }
   );
-  mostrarPantalla('cuestionario');
 }
 
 function guardarRespuesta(respuesta) {
@@ -58,7 +58,9 @@ function avanzar() {
     return;
   }
 
-  mostrarPantalla('contacto');
+  completarProgreso(estado.areas, estado.preguntas.length, () => {
+    mostrarPantalla('contacto');
+  });
 }
 
 function retroceder() {

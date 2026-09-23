@@ -11,53 +11,32 @@
   <link rel="stylesheet" href="css/estilos.css">
 </head>
 <body>
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <symbol id="logo" viewBox="0 0 290 150">
-      <text x="0" y="66" fill="#fff" font-family="Poppins, sans-serif" font-size="70" font-weight="800" letter-spacing="-3">anew</text>
-      <circle cx="214" cy="34" r="20" fill="none" stroke="#fff" stroke-width="8"/>
-      <rect x="199" y="53" width="30" height="11" rx="4" fill="#fff"/>
-      <rect x="58" y="84" width="10" height="10" fill="#fff"/>
-      <rect x="72" y="98" width="10" height="10" fill="#fff"/>
-      <rect x="58" y="112" width="10" height="10" fill="#fff"/>
-      <rect x="72" y="126" width="10" height="10" fill="#fff"/>
-      <text x="82" y="130" fill="#fff" font-family="Poppins, sans-serif" font-size="70" font-weight="800" letter-spacing="-3">pixel</text>
-    </symbol>
-  </svg>
-
   <template id="plantilla-cohete">
-    <svg viewBox="0 0 80 32" aria-hidden="true">
-      <rect x="0" y="14" width="26" height="4" rx="2" fill="#39d353"/>
-      <path d="M26 8 L38 2 L38 30 L26 24 Z" fill="#b4477a"/>
-      <path d="M32 4 Q68 4 78 16 Q68 28 32 28 Z" fill="#8f7cf0"/>
-      <path d="M32 4 Q68 4 78 16 L32 16 Z" fill="#b7a9ff"/>
-      <circle cx="56" cy="16" r="6" fill="#1a3bd1"/>
-      <circle cx="57" cy="15" r="2.5" fill="#6fc3ff"/>
-    </svg>
+    <img src="assets/progress-rocket.png" alt="" aria-hidden="true">
   </template>
 
   <main>
     <section id="inicio" class="pantalla pantalla-inicio">
       <div class="contenido">
-        <svg class="logo logo-grande" role="img" aria-label="anew pixel"><use href="#logo"/></svg>
+        <img class="logo logo-grande" src="assets/Logo-anewpixel.svg" alt="anew pixel">
         <p class="etiqueta">Descubre</p>
         <h1 class="titulo-inicio"><span class="ligero">Dónde está tu</span> <strong>próxima oportunidad de crecimiento</strong></h1>
         <p class="descripcion">Responde unas preguntas y nuestro diagnosticador analizará si tu negocio está aprovechando todo su potencial.</p>
         <button id="comenzar" class="boton-principal" type="button">
           <span>Descubrir mi oportunidad</span>
-          <svg class="flecha" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#fff"/><path d="M6 12h11m-4-4 4 4-4 4" fill="none" stroke="#22a90a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <img class="flecha" src="assets/arrow_r_svg.svg" alt="" aria-hidden="true">
         </button>
         <p id="error" class="error" role="alert" hidden></p>
       </div>
-      <div class="tierra"></div>
     </section>
 
     <section id="cuestionario" class="pantalla pantalla-pregunta" hidden>
       <div class="columna">
         <header class="cabecera">
-          <button id="atras" class="boton-atras" type="button" aria-label="Volver a la pregunta anterior">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5m4-4-4 4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <button id="atras" type="button" aria-label="Volver a la pregunta anterior">
+            <img src="assets/back_svg.svg" alt="" aria-hidden="true">
           </button>
-          <svg class="logo logo-chico" role="img" aria-label="anew pixel"><use href="#logo"/></svg>
+          <img class="logo logo-chico" src="assets/Logo-anewpixel.svg" alt="anew pixel">
           <span class="contador"><strong id="actual">1</strong>/<span id="total">13</span></span>
         </header>
         <div id="progreso" class="progreso"></div>
@@ -72,10 +51,10 @@
     <section id="contacto" class="pantalla pantalla-pregunta" hidden>
       <div class="columna">
         <header class="cabecera">
-          <button id="atras-contacto" class="boton-atras" type="button" aria-label="Volver a las preguntas">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5m4-4-4 4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <button id="atras-contacto" type="button" aria-label="Volver a las preguntas">
+            <img src="assets/back_svg.svg" alt="" aria-hidden="true">
           </button>
-          <svg class="logo logo-chico" role="img" aria-label="anew pixel"><use href="#logo"/></svg>
+          <img class="logo logo-chico" src="assets/Logo-anewpixel.svg" alt="anew pixel">
           <span></span>
         </header>
         <h2 class="pregunta"><span class="ligero">Último paso</span> <strong>¿A quién le mostramos el diagnóstico?</strong></h2>
@@ -102,7 +81,7 @@
 
     <section id="resultado" class="pantalla pantalla-pregunta" hidden>
       <div class="columna">
-        <svg class="logo logo-chico centrado" role="img" aria-label="anew pixel"><use href="#logo"/></svg>
+        <img class="logo logo-chico centrado" src="assets/Logo-anewpixel.svg" alt="anew pixel">
         <p class="etiqueta etiqueta-resultado">Tu diagnóstico</p>
         <h2 id="titulo-resultado" class="pregunta"></h2>
         <div id="areas" class="areas"></div>

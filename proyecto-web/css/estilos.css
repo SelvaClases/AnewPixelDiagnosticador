@@ -54,16 +54,19 @@ button {
 
 .pantalla-inicio {
   background:
-    radial-gradient(ellipse 42% 38% at 50% 0%, rgba(220, 120, 232, 0.95) 0%, rgba(150, 35, 195, 0.65) 55%, transparent 100%),
-    linear-gradient(180deg, #4d0fa3 0%, #2b0a78 42%, #0e0b4d 72%, #050a2e 100%);
+    linear-gradient(180deg, rgba(5, 10, 46, 0.3) 0%, rgba(5, 10, 46, 0.15) 38%, rgba(5, 10, 46, 0.6) 75%, rgba(5, 10, 46, 0.92) 100%),
+    url('../assets/bg_intro.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .pantalla-pregunta {
   background:
-    radial-gradient(ellipse 38% 34% at 50% 0%, rgba(160, 70, 190, 0.55) 0%, transparent 100%),
-    radial-gradient(ellipse 30% 40% at 18% 72%, rgba(170, 45, 95, 0.28) 0%, transparent 100%),
-    radial-gradient(ellipse 35% 45% at 88% 62%, rgba(70, 80, 200, 0.38) 0%, transparent 100%),
-    linear-gradient(180deg, #3b0b6c 0%, #1d0a4b 50%, #0c0730 100%);
+    url('../assets/bg_quiz.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .contenido,
@@ -99,12 +102,10 @@ button {
 
 .logo-grande {
   width: 190px;
-  aspect-ratio: 290 / 150;
 }
 
 .logo-chico {
   width: 130px;
-  aspect-ratio: 290 / 150;
 }
 
 .centrado {
@@ -227,25 +228,27 @@ button {
   width: 100%;
 }
 
-.boton-atras {
+#atras,
+#atras-contacto {
   display: grid;
   place-items: center;
+  justify-self: start;
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+#atras img,
+#atras-contacto img {
   width: 46px;
   height: 46px;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(200, 175, 235, 0.75);
-  color: #3a1478;
-  transition: background 0.2s;
+  transition: filter 0.2s, transform 0.2s;
 }
 
-.boton-atras:hover {
-  background: rgba(220, 200, 250, 0.95);
-}
-
-.boton-atras svg {
-  width: 24px;
-  height: 24px;
+#atras:hover img,
+#atras-contacto:hover img {
+  filter: brightness(1.3) drop-shadow(0 0 8px rgba(217, 166, 240, 0.8));
+  transform: scale(1.08);
 }
 
 .contador {
@@ -263,6 +266,7 @@ button {
 }
 
 .progreso {
+  position: relative;
   display: flex;
   gap: 12px;
   width: 100%;
@@ -287,15 +291,56 @@ button {
 .cohete {
   position: absolute;
   top: 50%;
-  left: calc(var(--avance) * 100%);
-  width: 58px;
-  transform: translate(calc(var(--avance) * -100%), -50%);
-  transition: left 0.4s ease, transform 0.4s ease;
+  left: 0;
+  width: 78px;
+  transform: translate(-50%, -50%);
+  transition: left 0.5s ease;
 }
 
-.cohete svg {
+.cohete img {
   display: block;
   width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.cohete::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 56%;
+  width: 65%;
+  height: 42%;
+  transform: translateY(-50%);
+  background: radial-gradient(
+    ellipse at right center,
+    #fff8dd 0%,
+    #ffd873 22%,
+    #ff9d42 45%,
+    #ff5f2e 65%,
+    rgba(255, 87, 34, 0) 85%
+  );
+  filter: blur(1.5px);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.cohete.impulsando::before {
+  opacity: 1;
+  animation: parpadeo-llama 0.15s infinite alternate ease-in-out;
+}
+
+@keyframes parpadeo-llama {
+  from {
+    transform: translateY(-50%) scaleX(0.8) scaleY(0.85);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateY(-50%) scaleX(1.2) scaleY(1.05);
+    opacity: 1;
+  }
 }
 
 .pregunta {
@@ -535,25 +580,11 @@ button {
     width: 100px;
   }
 
-  .boton-atras {
-    width: 38px;
-    height: 38px;
-  }
-
   .contador strong {
     font-size: 28px;
   }
 
-  .cohete {
-    width: 44px;
-  }
-
   .alternativa {
     padding: 26px 16px;
-  }
-
-  .tierra {
-    top: 78%;
-    width: 260vw;
   }
 }

@@ -22,33 +22,94 @@ function pintarTitulo(elemento, texto) {
   elemento.replaceChildren(crear('strong', '', texto));
 }
 
+let cacheProgreso = null;
+
+function activarPropulsion(cohete) {
+  cohete.addEventListener('transitionrun', (evento) => {
+    if (evento.propertyName === 'left') cohete.classList.add('impulsando');
+  });
+
+  cohete.addEventListener('transitionend', (evento) => {
+    if (evento.propertyName === 'left') cohete.classList.remove('impulsando');
+  });
+
+  cohete.addEventListener('transitioncancel', (evento) => {
+    if (evento.propertyName === 'left') cohete.classList.remove('impulsando');
+  });
+}
+
 function pintarProgreso(areas, indice) {
   const contenedor = $('progreso');
   const plantilla = $('plantilla-cohete');
-  let acumuladas = 0;
 
-  contenedor.replaceChildren(
-    ...areas.map((area) => {
-      const total = area.preguntas.length;
-      const hechas = Math.min(Math.max(indice - acumuladas, 0), total);
-      const fraccion = hechas / total;
+  if (!cacheProgreso || cacheProgreso.areas !== areas) {
+    const segmentos = areas.map(() => {
       const segmento = crear('div', 'segmento');
       const relleno = crear('div', 'relleno');
-
-      relleno.style.width = `${fraccion * 100}%`;
       segmento.append(relleno);
+      return { segmento, relleno };
+    });
 
-      if (indice >= acumuladas && indice < acumuladas + total) {
-        const cohete = crear('span', 'cohete');
-        cohete.style.setProperty('--avance', fraccion);
-        cohete.append(plantilla.content.cloneNode(true));
-        segmento.append(cohete);
-      }
+    const cohete = crear('span', 'cohete');
+    cohete.append(plantilla.content.cloneNode(true));
+    activarPropulsion(cohete);
 
-      acumuladas += total;
-      return segmento;
-    })
-  );
+    cacheProgreso = { areas, segmentos, cohete };
+    contenedor.replaceChildren(...segmentos.map(({ segmento }) => segmento), cohete);
+  }
+
+  let acumuladas = 0;
+  let segmentoActivo = null;
+  let fraccionActiva = 1;
+
+  cacheProgreso.segmentos.forEach((estado, indiceArea) => {
+    const total = areas[indiceArea].preguntas.length;
+    const hechas = Math.min(Math.max(indice - acumuladas, 0), total);
+    const fraccion = hechas / total;
+
+    estado.relleno.style.width = `${fraccion * 100}%`;
+
+    if (indice >= acumuladas && indice < acumuladas + total) {
+      segmentoActivo = estado.segmento;
+      fraccionActiva = fraccion;
+    }
+
+    acumuladas += total;
+  });
+
+  if (!segmentoActivo) {
+    segmentoActivo = cacheProgreso.segmentos[cacheProgreso.segmentos.length - 1].segmento;
+  }
+
+  const posicion = segmentoActivo.offsetLeft + segmentoActivo.offsetWidth * fraccionActiva;
+  cacheProgreso.cohete.style.left = `${posicion}px`;
+}
+
+export function completarProgreso(areas, total, alTerminar) {
+  pintarProgreso(areas, total);
+
+  const cohete = cacheProgreso && cacheProgreso.cohete;
+
+  if (!cohete) {
+    alTerminar();
+    return;
+  }
+
+  let terminado = false;
+
+  const finalizar = () => {
+    if (terminado) return;
+    terminado = true;
+    cohete.removeEventListener('transitionend', alFinDeTransicion);
+    alTerminar();
+  };
+
+  const alFinDeTransicion = (evento) => {
+    if (evento.propertyName === 'left') finalizar();
+  };
+
+  cohete.addEventListener('transitionend', alFinDeTransicion);
+  setTimeout(finalizar, 600);
 }
 
 function pintarUnica(pregunta, previa, alSeleccionar) {
