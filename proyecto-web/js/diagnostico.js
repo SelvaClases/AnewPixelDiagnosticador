@@ -39,6 +39,11 @@ export function rangoPosible(pregunta) {
     return { minimo: Math.min(...scores), maximo: Math.max(...scores) };
   }
 
+  if (pregunta.ponderaciones && pregunta.ponderaciones.length) {
+    const valores = pregunta.ponderaciones.map((rango) => Number(rango.valor));
+    return { minimo: Math.min(...valores), maximo: Math.max(...valores) };
+  }
+
   const negativos = sumar(scores.filter((score) => score < 0));
   const positivos = sumar(scores.filter((score) => score > 0));
 

@@ -30,6 +30,14 @@ CREATE TABLE IF NOT EXISTS inputs (
   input INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS ponderaciones (
+  id INTEGER PRIMARY KEY,
+  pregunta_id INTEGER NOT NULL REFERENCES preguntas (id) ON DELETE CASCADE,
+  minimo INTEGER NOT NULL,
+  maximo INTEGER NOT NULL,
+  valor INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS diagnosticos (
   id INTEGER PRIMARY KEY,
   nombre TEXT NOT NULL,
@@ -64,6 +72,7 @@ CREATE TABLE IF NOT EXISTS diagnostico_areas (
 CREATE INDEX IF NOT EXISTS idx_preguntas_area ON preguntas (area_id);
 CREATE INDEX IF NOT EXISTS idx_alternativas_pregunta ON alternativas (pregunta_id);
 CREATE INDEX IF NOT EXISTS idx_inputs_area ON inputs (area_id);
+CREATE INDEX IF NOT EXISTS idx_ponderaciones_pregunta ON ponderaciones (pregunta_id);
 CREATE INDEX IF NOT EXISTS idx_respuestas_diagnostico ON diagnostico_respuestas (diagnostico_id);
 CREATE INDEX IF NOT EXISTS idx_areas_diagnostico ON diagnostico_areas (diagnostico_id);
 

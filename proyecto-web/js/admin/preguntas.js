@@ -10,11 +10,11 @@ import {
   actualizarInput,
   eliminarInput
 } from '../consultas.js';
-import { TIPOS_PREGUNTA, rangoPosibleDeArea, huecosDeCobertura } from '../diagnostico.js';
+import { TIPOS_PREGUNTA, rangoPosible, rangoPosibleDeArea, huecosDeCobertura } from '../diagnostico.js';
 import { crear, plural } from '../utilidades.js';
-import { avisar, boton, campo, confirmar, ejecutar, entrada, formularioModal } from './interfaz.js';
+import { abrirModal, avisar, boton, campo, confirmar, ejecutar, entrada, formularioModal } from './interfaz.js';
 
-const SCORES_INICIALES = [50, 35, 20, 5];
+const SCORES_INICIALES = [40, 30, 20, 10];
 const abiertas = new Set();
 const inputsAbiertos = new Set();
 let raiz;
@@ -148,7 +148,28 @@ function tarjetaPregunta(pregunta, numero, estructura) {
   });
   tarjeta.append(lista);
 
+  if (pregunta.tipo === 'multiple') {
+    const ponderacion = crear('div', 'nota');
+    const resumen = [...pregunta.ponderaciones]
+      .sort((a, b) => a.minimo - b.minimo)
+      .map((rango) => `${rango.minimo}–${rango.maximo} → ${rango.valor} pts`)
+      .join(' · ');
+
+    ponderacion.append(
+      crear('strong', '', 'Ponderación: '),
+      document.createTextNode(resumen || 'sin rangos definidos')
+    );
+    tarjeta.append(ponderacion);
+  }
+
   return tarjeta;
+}
+
+function sumaMaximaCasillas(alternativas) {
+  return alternativas.reduce((total, item) => {
+    const valor = Number(item.score);
+    return valor > 0 ? total + valor : total;
+  }, 0);
 }
 
 function seccionInputs(area, rango) {
@@ -235,12 +256,122 @@ function seccionInputs(area, rango) {
   }
 
   const pie = crear('div', 'inputs-pie');
-  pie.append(boton('Cerrar', 'boton-secundario boton-chico', () => cambiar(false)));
+  pie.append(
+    boton('¿Cómo se calcula?', 'boton-secundario boton-chico', () => explicarCalculo(area, rango)),
+    boton('Cerrar', 'boton-secundario boton-chico', () => cambiar(false))
+  );
   cuerpo.append(pie);
 
   cabecera.append(alternar, accion);
   seccion.append(cabecera, cuerpo);
   return seccion;
+}
+
+function filaExplicacion(etiqueta, pts) {
+  const fila = crear('li', 'explicacion-fila');
+  fila.append(crear('span', '', etiqueta), crear('span', 'explicacion-pts', pts));
+  return fila;
+}
+
+function listaAlternativas(alternativas) {
+  const lista = crear('ul', 'explicacion-lista');
+  alternativas.forEach((alternativa) => {
+    lista.append(filaExplicacion(alternativa.alternativa || '(sin texto)', `${alternativa.score} pts`));
+  });
+  return lista;
+}
+
+function listaPonderaciones(ponderaciones) {
+  const lista = crear('ul', 'explicacion-lista explicacion-lista-ponderacion');
+  [...ponderaciones]
+    .sort((a, b) => a.minimo - b.minimo)
+    .forEach((rango) => {
+      lista.append(filaExplicacion(`${rango.minimo}–${rango.maximo}`, `${rango.valor} pts`));
+    });
+  return lista;
+}
+
+function filaRango(rangoPregunta) {
+  const fila = crear('div', 'explicacion-rango');
+  fila.append(
+    crear('span', 'explicacion-minimo', `Mínimo posible: ${rangoPregunta.minimo}`),
+    crear('span', 'explicacion-maximo', `Máximo posible: ${rangoPregunta.maximo}`)
+  );
+  return fila;
+}
+
+function explicarCalculo(area, rango) {
+  const cuerpo = crear('div', 'explicacion-calculo');
+
+  cuerpo.append(
+    crear('p', 'ayuda', `Así se calcula el puntaje del área "${area.nombre}", paso a paso.`)
+  );
+
+  const pasoUno = crear('div', 'explicacion-paso');
+  pasoUno.append(crear('h4', '', 'Paso 1 · Lo que aporta cada pregunta'));
+
+  if (!area.preguntas.length) {
+    pasoUno.append(crear('p', 'vacio', 'Esta área todavía no tiene preguntas.'));
+  }
+
+  area.preguntas.forEach((pregunta, indice) => {
+    const bloque = crear('div', 'explicacion-pregunta');
+    const encabezado = crear('div', 'explicacion-encabezado');
+
+    encabezado.append(
+      crear('span', 'numero', String(indice + 1)),
+      crear('p', 'explicacion-titulo', pregunta.pregunta),
+      crear('span', `chip tipo-${pregunta.tipo}`, TIPOS_PREGUNTA[pregunta.tipo].nombre)
+    );
+    bloque.append(encabezado);
+
+    if (pregunta.tipo === 'unica') {
+      bloque.append(
+        crear('p', 'explicacion-descripcion', 'Se suma el score de la alternativa que el cliente elige.'),
+        listaAlternativas(pregunta.alternativas),
+        filaRango(rangoPosible(pregunta))
+      );
+    } else if (pregunta.tipo === 'multiple') {
+      bloque.append(
+        crear(
+          'p',
+          'explicacion-descripcion',
+          'Se suman los scores de todas las casillas que el cliente marca.'
+        ),
+        listaAlternativas(pregunta.alternativas)
+      );
+
+      if (pregunta.ponderaciones.length) {
+        bloque.append(
+          crear('p', 'explicacion-descripcion', 'Esa suma se traduce con esta ponderación antes de sumarse al área:'),
+          listaPonderaciones(pregunta.ponderaciones)
+        );
+      } else {
+        bloque.append(crear('p', 'nota-explicacion', 'Sin ponderación definida: la suma se usa tal cual.'));
+      }
+
+      bloque.append(filaRango(rangoPosible(pregunta)));
+    } else {
+      bloque.append(
+        crear('p', 'explicacion-descripcion', 'No suma puntaje: solo queda guardada en el historial.')
+      );
+    }
+
+    pasoUno.append(bloque);
+  });
+
+  const pasoDos = crear('div', 'explicacion-paso');
+  pasoDos.append(
+    crear('h4', '', 'Paso 2 · El nivel final'),
+    crear(
+      'p',
+      'explicacion-descripcion',
+      `Se suma lo que aportó cada pregunta de arriba (el total del área puede ir de ${rango.minimo} a ${rango.maximo}). Ese total se busca en la tabla de Inputs para asignar el nivel que ve el cliente en su diagnóstico.`
+    )
+  );
+
+  cuerpo.append(pasoUno, pasoDos);
+  abrirModal({ titulo: `Cómo se calcula: ${area.nombre}`, cuerpo, ancho: 660 });
 }
 
 function filaEncabezado(titulos) {
@@ -344,7 +475,11 @@ function formularioPregunta(estructura, { pregunta, areaId }) {
     tipo: editando ? pregunta.tipo : 'unica',
     alternativas: editando
       ? pregunta.alternativas.map(({ alternativa, score }) => ({ alternativa, score }))
-      : SCORES_INICIALES.map((score) => ({ alternativa: '', score }))
+      : SCORES_INICIALES.map((score) => ({ alternativa: '', score })),
+    ponderaciones:
+      editando && pregunta.tipo === 'multiple'
+        ? pregunta.ponderaciones.map(({ minimo, maximo, valor }) => ({ minimo, maximo, valor }))
+        : []
   };
 
   const selectorArea = crear('select', 'entrada');
@@ -396,6 +531,83 @@ function formularioPregunta(estructura, { pregunta, areaId }) {
   encabezados.append(crear('span', '', 'Texto'), crear('span', '', 'Score'));
   bloque.append(tituloBloque, ayudaBloque, encabezados, filas, agregar);
 
+  const bloquePonderacion = crear('div', 'campo');
+  const ayudaPonderacion = crear('small', 'campo-ayuda');
+  const filasPonderacion = crear('div', 'filas-alternativas');
+  const encabezadosPonderacion = crear('div', 'fila-ponderacion fila-encabezado');
+  const agregarPonderacion = boton('+ Añadir rango', 'boton-secundario boton-chico', () => {
+    agregarRangoPonderacion();
+    filasPonderacion.querySelector('.fila-ponderacion:last-child input').focus();
+  });
+
+  encabezadosPonderacion.append(
+    crear('span', '', 'Desde (suma)'),
+    crear('span', '', 'Hasta (suma)'),
+    crear('span', '', 'Valor')
+  );
+  bloquePonderacion.append(
+    crear('span', 'campo-etiqueta', 'Ponderación de la suma (obligatoria)'),
+    ayudaPonderacion,
+    encabezadosPonderacion,
+    filasPonderacion,
+    agregarPonderacion
+  );
+
+  function agregarRangoPonderacion() {
+    const tope = sumaMaximaCasillas(estado.alternativas);
+    const sugerido = estado.ponderaciones.length
+      ? Math.min(Math.max(...estado.ponderaciones.map((item) => item.maximo)) + 1, tope)
+      : 0;
+
+    estado.ponderaciones.push({ minimo: sugerido, maximo: tope, valor: tope });
+    pintarFilasPonderacion();
+  }
+
+  function pintarFilasPonderacion() {
+    filasPonderacion.replaceChildren(
+      ...estado.ponderaciones.map((item, indice) => {
+        const fila = crear('div', 'fila-ponderacion');
+        const minimo = entrada('number', item.minimo, {
+          step: 1,
+          'aria-label': `Inicio del rango ${indice + 1} de ponderación`
+        });
+        const maximo = entrada('number', item.maximo, {
+          step: 1,
+          'aria-label': `Fin del rango ${indice + 1} de ponderación`
+        });
+        const valor = entrada('number', item.valor, {
+          step: 1,
+          'aria-label': `Valor del rango ${indice + 1} de ponderación`
+        });
+        const quitar = boton('×', 'boton-peligro boton-cuadrado', () => {
+          estado.ponderaciones.splice(indice, 1);
+          pintarFilasPonderacion();
+        });
+
+        minimo.addEventListener('input', () => {
+          item.minimo = minimo.value;
+        });
+        maximo.addEventListener('input', () => {
+          const tope = sumaMaximaCasillas(estado.alternativas);
+          if (Number(maximo.value) > tope) maximo.value = tope;
+          item.maximo = maximo.value;
+        });
+        valor.addEventListener('input', () => {
+          item.valor = valor.value;
+        });
+        [minimo, maximo, valor].forEach((control) => {
+          control.addEventListener('keydown', (evento) => {
+            if (evento.key === 'Enter') evento.preventDefault();
+          });
+        });
+
+        quitar.setAttribute('aria-label', 'Quitar rango');
+        fila.append(minimo, maximo, valor, quitar);
+        return fila;
+      })
+    );
+  }
+
   function pintarFilas() {
     const ultima = estado.alternativas.length - 1;
 
@@ -423,6 +635,7 @@ function formularioPregunta(estructura, { pregunta, areaId }) {
         });
         score.addEventListener('input', () => {
           item.score = score.value;
+          if (estado.tipo === 'multiple') actualizarAyudaPonderacion();
         });
         [textoAlternativa, score].forEach((control) => {
           control.addEventListener('keydown', (evento) => {
@@ -451,20 +664,34 @@ function formularioPregunta(estructura, { pregunta, areaId }) {
     pintarFilas();
   }
 
+  function actualizarAyudaPonderacion() {
+    const tope = sumaMaximaCasillas(estado.alternativas);
+    ayudaPonderacion.textContent = `La suma de las casillas marcadas va de 0 a ${tope}. Define a qué valor se traduce cada tramo de esa suma antes de sumarse al área. Es obligatorio definir al menos un rango.`;
+  }
+
   function actualizarTipo() {
     const abierta = estado.tipo === 'abierta';
+    const multiple = estado.tipo === 'multiple';
 
     bloque.hidden = abierta;
+    bloquePonderacion.hidden = !multiple;
     filaObligatoria.hidden = estado.tipo === 'unica';
-    tituloBloque.textContent =
-      estado.tipo === 'multiple' ? 'Opciones (casillas) y su ponderación' : 'Alternativas y su score';
-    ayudaBloque.textContent =
-      estado.tipo === 'multiple'
-        ? 'El cliente puede marcar varias. El score de cada casilla marcada se suma al puntaje del área.'
-        : 'El cliente elige una. El score de la elegida se suma al puntaje del área.';
+    tituloBloque.textContent = multiple ? 'Opciones (casillas) y su score' : 'Alternativas y su score';
+    ayudaBloque.textContent = multiple
+      ? 'El cliente puede marcar varias. El score de cada casilla marcada se suma, y esa suma se traduce según la ponderación de abajo.'
+      : 'El cliente elige una. El score de la elegida se suma al puntaje del área.';
 
     if (!abierta && !estado.alternativas.length) {
       estado.alternativas = SCORES_INICIALES.map((score) => ({ alternativa: '', score }));
+    }
+
+    if (multiple) {
+      actualizarAyudaPonderacion();
+      if (!estado.ponderaciones.length) {
+        const tope = sumaMaximaCasillas(estado.alternativas);
+        estado.ponderaciones = [{ minimo: 0, maximo: tope, valor: tope }];
+      }
+      pintarFilasPonderacion();
     }
 
     pintarFilas();
@@ -481,7 +708,8 @@ function formularioPregunta(estructura, { pregunta, areaId }) {
     grupoTipo,
     campo('Pregunta', texto, 'Tip: el texto antes del signo ¿ se muestra en letra ligera y el resto en negrita.'),
     opciones,
-    bloque
+    bloque,
+    bloquePonderacion
   );
 
   actualizarTipo();
@@ -497,7 +725,8 @@ function formularioPregunta(estructura, { pregunta, areaId }) {
         tipo: estado.tipo,
         obligatoria: obligatoria.checked,
         activa: activa.checked,
-        alternativas: estado.tipo === 'abierta' ? [] : estado.alternativas
+        alternativas: estado.tipo === 'abierta' ? [] : estado.alternativas,
+        ponderaciones: estado.tipo === 'multiple' ? estado.ponderaciones : []
       };
       const guardada = editando ? await actualizarPregunta(pregunta.id, datos) : await crearPregunta(datos);
 

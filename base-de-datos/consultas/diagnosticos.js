@@ -112,7 +112,6 @@ function evaluar(respuestas, estricto) {
         : respuestaConAlternativas(pregunta, entrante, estricto);
 
     dadas.forEach(({ respuesta, score }) => {
-      totales.get(pregunta.area_id).puntaje += score;
       filas.push({
         pregunta_id: pregunta.id,
         area: pregunta.area,
@@ -122,6 +121,14 @@ function evaluar(respuestas, estricto) {
         score
       });
     });
+
+    const sumaPregunta = dadas.reduce((total, { score }) => total + score, 0);
+    const ponderacion =
+      pregunta.tipo === 'multiple'
+        ? pregunta.ponderaciones.find((rango) => sumaPregunta >= rango.minimo && sumaPregunta <= rango.maximo)
+        : null;
+
+    totales.get(pregunta.area_id).puntaje += ponderacion ? ponderacion.valor : sumaPregunta;
   });
 
   const inputs = listarInputs();

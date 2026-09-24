@@ -1,5 +1,6 @@
 import { db, transaccion } from '../conexion.js';
 import { ErrorApi, entero, identificadores, texto } from '../validaciones.js';
+import { listarPonderaciones, guardarPonderaciones } from './ponderaciones.js';
 
 const TIPOS = ['unica', 'multiple', 'abierta'];
 const MAXIMO_ALTERNATIVAS = 20;
@@ -39,7 +40,7 @@ const insertarAlternativa = db.prepare(
   'INSERT INTO alternativas (pregunta_id, alternativa, score, orden) VALUES (?, ?, ?, ?)'
 );
 
-function armar(filas, alternativas) {
+function armar(filas, alternativas, ponderaciones = []) {
   return filas.map((fila) => ({
     id: fila.id,
     area_id: fila.area_id,
@@ -51,8 +52,44 @@ function armar(filas, alternativas) {
     orden: fila.orden,
     alternativas: alternativas
       .filter((alternativa) => alternativa.pregunta_id === fila.id)
-      .map(({ id, alternativa, score }) => ({ id, alternativa, score }))
+      .map(({ id, alternativa, score }) => ({ id, alternativa, score })),
+    ponderaciones: ponderaciones
+      .filter((rango) => rango.pregunta_id === fila.id)
+      .map(({ id, minimo, maximo, valor }) => ({ id, minimo, maximo, valor }))
   }));
+}
+
+function validarPonderaciones(entrada, sumaMaxima) {
+  const lista = Array.isArray(entrada.ponderaciones) ? entrada.ponderaciones : [];
+
+  if (!lista.length) {
+    throw new ErrorApi('Define al menos un rango de ponderación para esta pregunta');
+  }
+
+  const rangos = lista
+    .map((item, indice) => {
+      const minimo = entero(item && item.minimo, `el inicio del rango ${indice + 1} de ponderación`);
+      const maximoBruto = entero(item && item.maximo, `el final del rango ${indice + 1} de ponderación`);
+      const valor = entero(item && item.valor, `el valor del rango ${indice + 1} de ponderación`);
+      const maximo = Math.min(maximoBruto, sumaMaxima);
+
+      if (minimo > maximo) {
+        throw new ErrorApi(`El rango ${indice + 1} de ponderación no es válido`);
+      }
+
+      return { minimo, maximo, valor };
+    })
+    .sort((a, b) => a.minimo - b.minimo);
+
+  rangos.forEach((rango, indice) => {
+    const anterior = rangos[indice - 1];
+
+    if (anterior && rango.minimo <= anterior.maximo) {
+      throw new ErrorApi('Los rangos de ponderación no pueden cruzarse entre sí');
+    }
+  });
+
+  return rangos;
 }
 
 function validar(datos) {
@@ -70,6 +107,7 @@ function validar(datos) {
 
   const tipo = entrada.tipo;
   let alternativas = [];
+  let ponderaciones = [];
 
   if (tipo !== 'abierta') {
     const lista = Array.isArray(entrada.alternativas) ? entrada.alternativas : [];
@@ -87,6 +125,14 @@ function validar(datos) {
       alternativa: texto(item && item.alternativa, `la alternativa ${indice + 1}`, { max: 200 }),
       score: entero(item && item.score, `el score de la alternativa ${indice + 1}`)
     }));
+
+    if (tipo === 'multiple') {
+      const sumaMaxima = alternativas.reduce(
+        (total, item) => (item.score > 0 ? total + item.score : total),
+        0
+      );
+      ponderaciones = validarPonderaciones(entrada, sumaMaxima);
+    }
   }
 
   return {
@@ -95,7 +141,8 @@ function validar(datos) {
     tipo,
     obligatoria: tipo === 'unica' || entrada.obligatoria ? 1 : 0,
     activa: entrada.activa === undefined || entrada.activa ? 1 : 0,
-    alternativas
+    alternativas,
+    ponderaciones
   };
 }
 
@@ -108,7 +155,7 @@ function guardarAlternativas(preguntaId, alternativas) {
 
 export function obtenerPreguntasConScore({ soloActivas = false } = {}) {
   const filas = (soloActivas ? listarActivas : listarTodas).all();
-  return armar(filas, listarAlternativas.all());
+  return armar(filas, listarAlternativas.all(), listarPonderaciones());
 }
 
 export function obtenerPreguntasPublicas() {
@@ -130,22 +177,23 @@ export function obtenerPregunta(id) {
     throw new ErrorApi('La pregunta no existe', 404);
   }
 
-  return armar([fila], alternativasDe.all(id))[0];
+  return armar([fila], alternativasDe.all(id), listarPonderaciones())[0];
 }
 
 export function crearPregunta(datos) {
-  const { areaId, pregunta, tipo, obligatoria, activa, alternativas } = validar(datos);
+  const { areaId, pregunta, tipo, obligatoria, activa, alternativas, ponderaciones } = validar(datos);
 
   return transaccion(() => {
     const orden = ultimoOrden.get(areaId).ultimo + 1;
     const { lastInsertRowid } = insertar.run(areaId, pregunta, tipo, obligatoria, activa, orden);
     guardarAlternativas(lastInsertRowid, alternativas);
+    guardarPonderaciones(lastInsertRowid, ponderaciones);
     return obtenerPregunta(lastInsertRowid);
   });
 }
 
 export function actualizarPregunta(id, datos) {
-  const { areaId, pregunta, tipo, obligatoria, activa, alternativas } = validar(datos);
+  const { areaId, pregunta, tipo, obligatoria, activa, alternativas, ponderaciones } = validar(datos);
   const actual = areaDe.get(id);
 
   if (!actual) {
@@ -157,6 +205,7 @@ export function actualizarPregunta(id, datos) {
       actual.area_id === areaId ? ordenActual.get(id).orden : ultimoOrden.get(areaId).ultimo + 1;
     actualizar.run(areaId, pregunta, tipo, obligatoria, activa, orden, id);
     guardarAlternativas(id, alternativas);
+    guardarPonderaciones(id, ponderaciones);
     return obtenerPregunta(id);
   });
 }
