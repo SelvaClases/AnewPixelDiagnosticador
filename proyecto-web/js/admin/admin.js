@@ -2,13 +2,14 @@ import { crear } from '../utilidades.js';
 import { obtenerSesion, cerrarSesion, cambiarClave } from '../consultas.js';
 import { avisar, campo, entrada, formularioModal } from './interfaz.js';
 import * as preguntas from './preguntas.js';
-import * as orden from './orden.js';
 import * as historial from './historial.js';
 import * as usuarios from './usuarios.js';
+import * as metricas from './metricas.js';
+import * as pantallas from './pantallas.js';
 
 const LOGIN = '/login-anewpixel.html';
 const LATIDO = 60 * 1000;
-const vistas = { preguntas, orden, historial, usuarios };
+const vistas = { preguntas, pantallas, historial, metricas, usuarios };
 const contenido = document.getElementById('contenido');
 const botones = document.querySelectorAll('[data-vista]');
 
@@ -27,6 +28,7 @@ async function mostrar(nombre) {
 
   history.replaceState(null, '', `#${nombre}`);
   contenido.replaceChildren(panel);
+  contenido.scrollTop = 0;
 
   try {
     await vistas[nombre].montar(panel);

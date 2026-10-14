@@ -14,6 +14,11 @@ import {
   ordenarPreguntas
 } from '../consultas/preguntas.js';
 import { crearInput, actualizarInput, eliminarInput } from '../consultas/inputs.js';
+import { listarNiveles, crearNivel, actualizarNivel, eliminarNivel } from '../consultas/niveles.js';
+import {
+  listarSesiones as listarSesionesCuestionario,
+  obtenerRespuestasDeSesion
+} from '../consultas/metricas.js';
 import {
   listarDiagnosticos,
   obtenerDiagnostico,
@@ -30,6 +35,8 @@ import {
   eliminarUsuario
 } from '../consultas/usuarios.js';
 import { listarSesionesActivas, cerrarSesion } from '../consultas/sesiones.js';
+import { obtenerRedesSocialesAdmin, actualizarRedesSociales } from '../consultas/redesSociales.js';
+import { obtenerPantallaFinal, actualizarPantallaFinal } from '../consultas/pantallaFinal.js';
 import { borrarCookie } from '../autenticacion.js';
 import { ErrorApi } from '../validaciones.js';
 
@@ -91,6 +98,31 @@ rutasAdmin.delete('/inputs/:id', (req, res) => {
   listo(res);
 });
 
+rutasAdmin.get('/niveles', (req, res) => {
+  res.json(listarNiveles());
+});
+
+rutasAdmin.get('/metricas-cuestionario', (req, res) => {
+  res.json(listarSesionesCuestionario());
+});
+
+rutasAdmin.get('/metricas-cuestionario/:sesionId/respuestas', (req, res) => {
+  res.json(obtenerRespuestasDeSesion(req.params.sesionId));
+});
+
+rutasAdmin.post('/niveles', (req, res) => {
+  res.status(201).json(crearNivel(req.body));
+});
+
+rutasAdmin.put('/niveles/:id', (req, res) => {
+  res.json(actualizarNivel(identificador(req), req.body));
+});
+
+rutasAdmin.delete('/niveles/:id', (req, res) => {
+  eliminarNivel(identificador(req));
+  listo(res);
+});
+
 rutasAdmin.get('/diagnosticos', (req, res) => {
   res.json(listarDiagnosticos(req.query.q));
 });
@@ -142,6 +174,22 @@ rutasAdmin.get('/sesiones', (req, res) => {
   res.json(
     listarSesionesActivas().map((sesion) => ({ ...sesion, actual: sesion.id === req.sesion.id }))
   );
+});
+
+rutasAdmin.get('/redes-sociales', (req, res) => {
+  res.json(obtenerRedesSocialesAdmin());
+});
+
+rutasAdmin.put('/redes-sociales', (req, res) => {
+  res.json(actualizarRedesSociales(req.body.redes, req.body.estilo));
+});
+
+rutasAdmin.get('/pantalla-final', (req, res) => {
+  res.json(obtenerPantallaFinal());
+});
+
+rutasAdmin.put('/pantalla-final', (req, res) => {
+  res.json(actualizarPantallaFinal(req.body));
 });
 
 rutasAdmin.delete('/sesiones/:id', (req, res) => {

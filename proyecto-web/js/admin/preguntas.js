@@ -474,8 +474,8 @@ function formularioPregunta(estructura, { pregunta, areaId }) {
   const estado = {
     tipo: editando ? pregunta.tipo : 'unica',
     alternativas: editando
-      ? pregunta.alternativas.map(({ alternativa, score }) => ({ alternativa, score }))
-      : SCORES_INICIALES.map((score) => ({ alternativa: '', score })),
+      ? pregunta.alternativas.map(({ alternativa, score, es_otro }) => ({ alternativa, score, es_otro: Boolean(es_otro) }))
+      : SCORES_INICIALES.map((score) => ({ alternativa: '', score, es_otro: false })),
     ponderaciones:
       editando && pregunta.tipo === 'multiple'
         ? pregunta.ponderaciones.map(({ minimo, maximo, valor }) => ({ minimo, maximo, valor }))
@@ -523,12 +523,12 @@ function formularioPregunta(estructura, { pregunta, areaId }) {
   const filas = crear('div', 'filas-alternativas');
   const encabezados = crear('div', 'fila-alternativa fila-encabezado');
   const agregar = boton('+ Añadir alternativa', 'boton-secundario boton-chico', () => {
-    estado.alternativas.push({ alternativa: '', score: 0 });
+    estado.alternativas.push({ alternativa: '', score: 0, es_otro: false });
     pintarFilas();
     filas.querySelector('.fila-alternativa:last-child input').focus();
   });
 
-  encabezados.append(crear('span', '', 'Texto'), crear('span', '', 'Score'));
+  encabezados.append(crear('span', '', 'Texto'), crear('span', '', 'Score'), crear('span', '', 'Otro'));
   bloque.append(tituloBloque, ayudaBloque, encabezados, filas, agregar);
 
   const bloquePonderacion = crear('div', 'campo');
@@ -623,6 +623,10 @@ function formularioPregunta(estructura, { pregunta, areaId }) {
           step: 1,
           'aria-label': `Score de la alternativa ${indice + 1}`
         });
+        const esOtro = crear('input', 'casilla-otro', undefined, {
+          type: 'checkbox',
+          'aria-label': `La alternativa ${indice + 1} es la opción "Otro"`
+        });
         const subir = boton('↑', 'boton-secundario boton-cuadrado', () => mover(indice, -1));
         const bajar = boton('↓', 'boton-secundario boton-cuadrado', () => mover(indice, 1));
         const quitar = boton('×', 'boton-peligro boton-cuadrado', () => {
@@ -630,12 +634,30 @@ function formularioPregunta(estructura, { pregunta, areaId }) {
           pintarFilas();
         });
 
+        esOtro.checked = item.es_otro;
+
         textoAlternativa.addEventListener('input', () => {
           item.alternativa = textoAlternativa.value;
         });
         score.addEventListener('input', () => {
           item.score = score.value;
           if (estado.tipo === 'multiple') actualizarAyudaPonderacion();
+        });
+        esOtro.addEventListener('change', () => {
+          if (esOtro.checked) {
+            estado.alternativas.forEach((otra) => {
+              otra.es_otro = otra === item;
+            });
+            item.textoPrevio = item.alternativa;
+            item.alternativa = 'Otro';
+          } else {
+            item.es_otro = false;
+            if (item.textoPrevio !== undefined) {
+              item.alternativa = item.textoPrevio;
+              delete item.textoPrevio;
+            }
+          }
+          pintarFilas();
         });
         [textoAlternativa, score].forEach((control) => {
           control.addEventListener('keydown', (evento) => {
@@ -649,7 +671,7 @@ function formularioPregunta(estructura, { pregunta, areaId }) {
         bajar.setAttribute('aria-label', 'Bajar alternativa');
         quitar.setAttribute('aria-label', 'Quitar alternativa');
 
-        fila.append(textoAlternativa, score, subir, bajar, quitar);
+        fila.append(textoAlternativa, score, esOtro, subir, bajar, quitar);
         return fila;
       })
     );

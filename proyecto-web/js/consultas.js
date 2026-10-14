@@ -36,6 +36,22 @@ export function guardarDiagnostico(persona, respuestas) {
   return consultar('/diagnosticos', 'POST', { persona, respuestas });
 }
 
+export function obtenerVistaPrevia(respuestas) {
+  return consultar('/vista-previa', 'POST', { respuestas });
+}
+
+export function enviarProgresoCuestionario(datos) {
+  return consultar('/progreso-cuestionario', 'POST', datos);
+}
+
+export function obtenerMetricasCuestionario() {
+  return consultar('/admin/metricas-cuestionario');
+}
+
+export function obtenerRespuestasCuestionario(sesionId) {
+  return consultar(`/admin/metricas-cuestionario/${encodeURIComponent(sesionId)}/respuestas`);
+}
+
 export function obtenerEstructura() {
   return consultar('/admin/estructura');
 }
@@ -82,6 +98,22 @@ export function actualizarInput(id, datos) {
 
 export function eliminarInput(id) {
   return consultar(`/admin/inputs/${id}`, 'DELETE');
+}
+
+export function listarNiveles() {
+  return consultar('/admin/niveles');
+}
+
+export function crearNivel(datos) {
+  return consultar('/admin/niveles', 'POST', datos);
+}
+
+export function actualizarNivel(id, datos) {
+  return consultar(`/admin/niveles/${id}`, 'PUT', datos);
+}
+
+export function eliminarNivel(id) {
+  return consultar(`/admin/niveles/${id}`, 'DELETE');
 }
 
 export function listarDiagnosticos(busqueda = '') {
@@ -146,4 +178,28 @@ export function listarSesiones() {
 
 export function cerrarSesionDe(id) {
   return consultar(`/admin/sesiones/${id}`, 'DELETE');
+}
+
+export function obtenerRedesSociales() {
+  return consultar('/admin/redes-sociales');
+}
+
+export function actualizarRedesSociales(redes, estilo) {
+  return consultar('/admin/redes-sociales', 'PUT', { redes, estilo });
+}
+
+export function obtenerRedesSocialesPublicas() {
+  return consultar('/redes-sociales');
+}
+
+export function obtenerPantallaFinalPublica() {
+  return consultar('/pantalla-final');
+}
+
+export function obtenerPantallaFinal() {
+  return consultar('/admin/pantalla-final');
+}
+
+export function actualizarPantallaFinal(datos) {
+  return consultar('/admin/pantalla-final', 'PUT', datos);
 }

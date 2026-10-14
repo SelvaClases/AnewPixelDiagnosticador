@@ -9,10 +9,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/estilos.css">
+  <!-- Meta Pixel: el ID se elige por país (MX/PE) en js/pixel.js, no aquí. -->
 </head>
 <body>
   <template id="plantilla-cohete">
     <img src="assets/progress-rocket.png" alt="" aria-hidden="true">
+  </template>
+
+  <template id="plantilla-oportunidad">
+    <span class="icono">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="currentColor"/><path d="M7 12h10m-4-4 4 4-4 4" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </span>
   </template>
 
   <main>
@@ -20,8 +27,8 @@
       <div class="contenido">
         <img class="logo logo-grande" src="assets/Logo-anewpixel.svg" alt="anew pixel">
         <p class="etiqueta">Descubre</p>
-        <h1 class="titulo-inicio"><span class="ligero">Dónde está tu</span> <strong>próxima oportunidad de crecimiento</strong></h1>
-        <p class="descripcion">Responde unas preguntas y nuestro diagnosticador analizará si tu negocio está aprovechando todo su potencial.</p>
+        <h1 class="titulo-inicio"><span class="ligero">Dónde está tu</span> <strong>próxima</strong><br><strong>oportunidad de crecimiento</strong></h1>
+        <p class="descripcion">Responde unas preguntas y nuestro diagnosticador analizará si tu<br>negocio está aprovechando todo su potencial.</p>
         <button id="comenzar" class="boton-principal" type="button">
           <span>Descubrir mi oportunidad</span>
           <img class="flecha" src="assets/arrow_r_svg.svg" alt="" aria-hidden="true">
@@ -51,7 +58,40 @@
       </div>
     </section>
 
-    <section id="contacto" class="pantalla pantalla-pregunta" hidden>
+    <section id="resumen" class="pantalla pantalla-resumen" hidden>
+      <div class="fondo-parallax" aria-hidden="true"></div>
+      <canvas class="resumen-vapor" aria-hidden="true"></canvas>
+      <div class="columna">
+        <img class="logo logo-chico centrado" src="assets/Logo-anewpixel.svg" alt="anew pixel">
+        <div class="resumen-progreso">
+          <img id="resumen-vehiculo" src="" alt="" aria-hidden="true">
+          <div class="resumen-barra"></div>
+        </div>
+        <h2 id="resumen-titulo" class="resumen-titulo"></h2>
+        <div id="resumen-introduccion" class="resumen-introduccion"></div>
+        <ul id="resumen-lista" class="resumen-lista"></ul>
+        <div id="resumen-texto-intermedio" class="resumen-introduccion"></div>
+        <h3 id="resumen-cierre-titulo" class="resumen-pregunta"></h3>
+        <p id="resumen-cierre-texto" class="resumen-texto"></p>
+        <!-- Oculto por ahora: la pantalla de agradecimiento no se está usando. Se puede
+             reactivar quitando el atributo "hidden" de estos dos elementos. -->
+        <button id="ver-agradecimiento" class="boton-principal" type="button" hidden>
+          <span id="resumen-boton-texto"></span>
+          <img class="flecha" src="assets/arrow_r_svg.svg" alt="" aria-hidden="true">
+        </button>
+        <p id="resumen-boton-nota" class="resumen-nota" hidden></p>
+        <button id="repetir-test" class="boton-principal" type="button">
+          <span>Volver a hacer el test</span>
+        </button>
+        <div id="redes-resumen" class="redes-sociales" hidden>
+          <p id="redes-resumen-titulo" class="agradecimiento-subtitulo"></p>
+          <div id="redes-resumen-lista" class="redes-lista"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contacto" class="pantalla pantalla-contacto-parallax" hidden>
+      <div class="fondo-parallax" aria-hidden="true"></div>
       <div class="columna">
         <header class="cabecera">
           <button id="atras-contacto" type="button" aria-label="Volver a las preguntas">
@@ -60,23 +100,53 @@
           <img class="logo logo-chico" src="assets/Logo-anewpixel.svg" alt="anew pixel">
           <span></span>
         </header>
-        <h2 class="pregunta"><span class="ligero">Último paso</span> <strong>¿A quién le mostramos el diagnóstico?</strong></h2>
+        <h2 class="titulo-contacto">¿Listo para hacer crecer tu negocio?</h2>
+        <p class="descripcion-contacto">Dejános tus datos y conversemos sobre cómo podemos ayudarte a alcanzar tus objetivos.<br><strong>¡Tu primera consultoría es gratis!</strong></p>
         <form id="formulario-contacto" class="formulario">
-          <label class="campo">Nombre completo *
-            <input type="text" name="nombre" required maxlength="120" autocomplete="name">
+          <label class="campo">
+            <span class="campo-etiqueta">Nombre completo*</span>
+            <input type="text" name="nombre" placeholder="Nombre completo*" required maxlength="120" autocomplete="name">
           </label>
-          <label class="campo">Empresa
-            <input type="text" name="empresa" maxlength="120" autocomplete="organization">
+          <label class="campo">
+            <span class="campo-etiqueta">Nombre de tu empresa*</span>
+            <input type="text" name="empresa" placeholder="Nombre de tu empresa*" required maxlength="120" autocomplete="organization">
           </label>
-          <label class="campo">Correo electrónico *
-            <input type="email" name="correo" required maxlength="160" autocomplete="email">
+          <label class="campo">
+            <span class="campo-etiqueta">Selecciona el rubro de tu empresa*</span>
+            <select name="rubro" id="rubro" required>
+              <option value="" disabled selected hidden>Selecciona el rubro de tu empresa*</option>
+              <option value="Retail y comercio">Retail y comercio</option>
+              <option value="Servicios profesionales">Servicios profesionales</option>
+              <option value="Tecnología">Tecnología</option>
+              <option value="Salud">Salud</option>
+              <option value="Educación">Educación</option>
+              <option value="Alimentos y bebidas">Alimentos y bebidas</option>
+              <option value="Construcción e inmobiliaria">Construcción e inmobiliaria</option>
+              <option value="Otro">Otro</option>
+            </select>
           </label>
-          <label class="campo">Teléfono
-            <input type="tel" name="telefono" maxlength="40" autocomplete="tel">
+          <label class="campo" id="campo-rubro-otro" hidden>
+            <span class="campo-etiqueta">Especifica el rubro*</span>
+            <input type="text" name="rubro_otro" id="rubro-otro" placeholder="Escribe el rubro de tu empresa" maxlength="120">
           </label>
+          <label class="campo">
+            <span class="campo-etiqueta">Correo electrónico*</span>
+            <input type="email" name="correo" placeholder="Correo electrónico*" required maxlength="160" autocomplete="email">
+          </label>
+          <div class="campo-telefono">
+            <label class="campo campo-codigo">
+              <span class="campo-etiqueta">Código</span>
+              <select name="codigo_telefono" id="codigo-telefono" autocomplete="tel-country-code"></select>
+            </label>
+            <label class="campo campo-numero">
+              <span class="campo-etiqueta">Teléfono</span>
+              <input type="tel" name="telefono" id="telefono" placeholder="999 777 888" maxlength="20" inputmode="numeric" autocomplete="tel-national">
+            </label>
+          </div>
           <p id="error-contacto" class="error" role="alert" hidden></p>
-          <button id="enviar" class="boton-principal" type="submit">
-            <span>Ver mi diagnóstico</span>
+          <button id="enviar" class="boton-principal boton-contacto" type="submit">
+            <span>Quiero agendar mi consultoría</span>
+            <img class="flecha" src="assets/arrow_r_svg.svg" alt="" aria-hidden="true">
           </button>
         </form>
       </div>
@@ -85,11 +155,21 @@
     <section id="resultado" class="pantalla pantalla-pregunta" hidden>
       <div class="columna">
         <img class="logo logo-chico centrado" src="assets/Logo-anewpixel.svg" alt="anew pixel">
-        <p class="etiqueta etiqueta-resultado">Tu diagnóstico</p>
-        <h2 id="titulo-resultado" class="pregunta"></h2>
-        <div id="areas" class="areas"></div>
+        <p id="final-etiqueta" class="etiqueta etiqueta-resultado">¡Listo!</p>
+        <h2 class="pregunta agradecimiento-titulo">
+          <strong id="final-titulo">Gracias por registrarte</strong>
+        </h2>
+        <div id="final-mensajes" class="agradecimiento-mensajes">
+          <p class="agradecimiento-texto">
+            Ya tenemos tu diagnóstico. Estaremos al tanto de tu registro y te daremos seguimiento muy pronto.
+          </p>
+        </div>
+        <div id="redes-agradecimiento" class="redes-sociales" hidden>
+          <p id="final-redes-titulo" class="agradecimiento-subtitulo">Síguenos para conocernos más</p>
+          <div id="redes-lista" class="redes-lista"></div>
+        </div>
         <button id="reiniciar" class="boton-principal" type="button">
-          <span>Volver a empezar</span>
+          <span id="final-boton-texto">Volver a empezar</span>
         </button>
       </div>
     </section>

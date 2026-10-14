@@ -2,12 +2,21 @@ import { db, transaccion } from '../conexion.js';
 import { ErrorApi, texto } from '../validaciones.js';
 import { obtenerPreguntasConScore } from './preguntas.js';
 import { listarInputs } from './inputs.js';
+import { nivelParaPuntaje, rangoGlobal, listarNiveles } from './niveles.js';
 
 const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAXIMO_TEXTO_ABIERTO = 2000;
 
+// Un perfil por nivel general, en el mismo orden (de menor a mayor puntaje).
+const PERFILES = [
+  'Empresa consolidada',
+  'Oportunidades por potenciar',
+  'Potencial de crecimiento',
+  'Alto potencial por aprovechar'
+];
+
 const insertarDiagnostico = db.prepare(
-  'INSERT INTO diagnosticos (nombre, empresa, correo, telefono, notas, origen) VALUES (?, ?, ?, ?, ?, ?)'
+  'INSERT INTO diagnosticos (nombre, empresa, rubro, correo, telefono, notas, origen, pais, perfil) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
 const insertarRespuesta = db.prepare(
   'INSERT INTO diagnostico_respuestas (diagnostico_id, pregunta_id, area, pregunta, tipo, respuesta, score) VALUES (?, ?, ?, ?, ?, ?, ?)'
@@ -16,7 +25,7 @@ const insertarArea = db.prepare(
   'INSERT INTO diagnostico_areas (diagnostico_id, area, puntaje, input, maximo) VALUES (?, ?, ?, ?, ?)'
 );
 const buscar = db.prepare(
-  'SELECT id, nombre, empresa, correo, telefono, notas, origen, creado_en FROM diagnosticos WHERE id = ?'
+  'SELECT id, nombre, empresa, rubro, correo, telefono, notas, origen, pais, perfil, creado_en FROM diagnosticos WHERE id = ?'
 );
 const respuestasDe = db.prepare(
   'SELECT pregunta_id, area, pregunta, tipo, respuesta, score FROM diagnostico_respuestas WHERE diagnostico_id = ? ORDER BY id'
@@ -25,7 +34,7 @@ const areasDe = db.prepare(
   'SELECT area, puntaje, input, maximo FROM diagnostico_areas WHERE diagnostico_id = ? ORDER BY id'
 );
 const listar = db.prepare(`
-  SELECT id, nombre, empresa, correo, telefono, origen, creado_en
+  SELECT id, nombre, empresa, rubro, correo, telefono, origen, pais, perfil, creado_en
   FROM diagnosticos
   WHERE nombre LIKE ? OR empresa LIKE ? OR correo LIKE ? OR telefono LIKE ?
   ORDER BY creado_en DESC, id DESC
@@ -34,9 +43,11 @@ const listarResumenes = db.prepare(
   'SELECT diagnostico_id, area, input, maximo FROM diagnostico_areas ORDER BY id'
 );
 const actualizarPersona = db.prepare(
-  'UPDATE diagnosticos SET nombre = ?, empresa = ?, correo = ?, telefono = ?, notas = ? WHERE id = ?'
+  'UPDATE diagnosticos SET nombre = ?, empresa = ?, rubro = ?, correo = ?, telefono = ?, notas = ? WHERE id = ?'
 );
 const borrar = db.prepare('DELETE FROM diagnosticos WHERE id = ?');
+const sinPerfil = db.prepare('SELECT id FROM diagnosticos WHERE perfil IS NULL');
+const guardarPerfil = db.prepare('UPDATE diagnosticos SET perfil = ? WHERE id = ?');
 
 function validarPersona(persona, estricto) {
   const entrada = persona || {};
@@ -48,7 +59,8 @@ function validarPersona(persona, estricto) {
 
   return {
     nombre: texto(entrada.nombre, 'el nombre', { max: 120 }),
-    empresa: texto(entrada.empresa, 'la empresa', { max: 120, obligatorio: false }),
+    empresa: texto(entrada.empresa, 'la empresa', { max: 120, obligatorio: estricto }),
+    rubro: texto(entrada.rubro, 'el rubro', { max: 120, obligatorio: estricto }),
     correo,
     telefono: texto(entrada.telefono, 'el teléfono', { max: 40, obligatorio: false }),
     notas: texto(entrada.notas, 'las notas', { max: 2000, obligatorio: false })
@@ -90,7 +102,22 @@ function respuestaConAlternativas(pregunta, entrante, estricto) {
     throw new ErrorApi(`Falta responder: ${pregunta.pregunta}`);
   }
 
-  return elegidas.map(({ alternativa, score }) => ({ respuesta: alternativa, score }));
+  return elegidas.map((alternativa) => {
+    if (alternativa.es_otro) {
+      const contenido = typeof entrante.texto === 'string' ? entrante.texto.trim() : '';
+
+      if (!contenido) {
+        if (estricto) {
+          throw new ErrorApi(`Escribe tu respuesta en "Otro" para: ${pregunta.pregunta}`);
+        }
+        return { respuesta: alternativa.alternativa, score: alternativa.score };
+      }
+
+      return { respuesta: contenido, score: alternativa.score };
+    }
+
+    return { respuesta: alternativa.alternativa, score: alternativa.score };
+  });
 }
 
 function evaluar(respuestas, estricto) {
@@ -148,6 +175,83 @@ function evaluar(respuestas, estricto) {
   return { filas, areas };
 }
 
+export function respuestasLegibles(respuestas) {
+  return evaluar(respuestas, false).filas;
+}
+
+export function vistaPreviaDiagnostico(respuestas) {
+  const { areas } = evaluar(respuestas, false);
+  const puntajeTotal = areas.reduce((total, area) => total + area.input, 0);
+  const nivel = nivelParaPuntaje(puntajeTotal);
+  const niveles = listarNiveles();
+  const indice = nivel ? niveles.findIndex((item) => item.id === nivel.id) : -1;
+  const fraccion = indice >= 0 ? 1 - (indice + 0.5) / niveles.length : 1;
+
+  return {
+    areas,
+    puntajeTotal,
+    nivel,
+    rango: rangoGlobal(),
+    fraccion
+  };
+}
+
+// Perfil del historial: el nivel general en el que cae el total de inputs y un score 0–100
+// repartido en tramos iguales por nivel, para que el número siempre coincida con la etiqueta.
+// Se calcula una sola vez al guardar el registro y queda congelado.
+function perfilDe(areas, niveles) {
+  if (!areas.length) {
+    return null;
+  }
+
+  const total = areas.reduce((suma, area) => suma + area.input, 0);
+  const indice = niveles.findIndex((nivel) => total >= nivel.minimo && total <= nivel.maximo);
+
+  if (indice < 0) {
+    return { total, indice: -1, score: null, nombre: '', titulo: '', color: '' };
+  }
+
+  const nivel = niveles[indice];
+  const tramo = 100 / niveles.length;
+  const avance = nivel.maximo > nivel.minimo ? (total - nivel.minimo) / (nivel.maximo - nivel.minimo) : 1;
+  const inicio = indice === 0 ? 0 : Math.round(tramo * indice) + 1;
+  const fin = Math.round(tramo * (indice + 1));
+
+  return {
+    total,
+    indice,
+    niveles: niveles.length,
+    score: Math.round(inicio + (fin - inicio) * avance),
+    nombre: niveles.length === PERFILES.length ? PERFILES[indice] : nivel.titulo,
+    titulo: nivel.titulo,
+    color: nivel.color,
+    minimo: nivel.minimo,
+    maximo: nivel.maximo
+  };
+}
+
+function leerPerfil(fila) {
+  return { ...fila, perfil: fila.perfil ? JSON.parse(fila.perfil) : null };
+}
+
+// Registros guardados antes de congelar el perfil: se les fija el que corresponde hoy, una sola vez.
+function completarPerfilesFaltantes() {
+  const pendientes = sinPerfil.all();
+
+  if (!pendientes.length) return;
+
+  const niveles = listarNiveles();
+
+  transaccion(() => {
+    pendientes.forEach(({ id }) => {
+      const perfil = perfilDe(areasDe.all(id), niveles);
+      if (perfil) guardarPerfil.run(JSON.stringify(perfil), id);
+    });
+  });
+}
+
+completarPerfilesFaltantes();
+
 export function obtenerDiagnostico(id) {
   const diagnostico = buscar.get(id);
 
@@ -156,7 +260,7 @@ export function obtenerDiagnostico(id) {
   }
 
   return {
-    ...diagnostico,
+    ...leerPerfil(diagnostico),
     respuestas: respuestasDe.all(id).map((fila) => ({ ...fila })),
     areas: areasDe.all(id).map((fila) => ({ ...fila }))
   };
@@ -175,23 +279,27 @@ export function listarDiagnosticos(busqueda) {
   });
 
   return listar.all(patron, patron, patron, patron).map((fila) => ({
-    ...fila,
+    ...leerPerfil(fila),
     areas: resumenes.get(fila.id) || []
   }));
 }
 
-export function guardarDiagnostico(persona, respuestas, { origen, estricto }) {
+export function guardarDiagnostico(persona, respuestas, { origen, estricto, pais = '' }) {
   const datos = validarPersona(persona, estricto);
   const { filas, areas } = evaluar(respuestas, estricto);
+  const perfil = perfilDe(areas, listarNiveles());
 
   const id = transaccion(() => {
     const { lastInsertRowid } = insertarDiagnostico.run(
       datos.nombre,
       datos.empresa,
+      datos.rubro,
       datos.correo,
       datos.telefono,
       datos.notas,
-      origen
+      origen,
+      pais,
+      perfil ? JSON.stringify(perfil) : null
     );
 
     filas.forEach((fila) => {
@@ -221,6 +329,7 @@ export function actualizarDiagnostico(id, persona) {
   const { changes } = actualizarPersona.run(
     datos.nombre,
     datos.empresa,
+    datos.rubro,
     datos.correo,
     datos.telefono,
     datos.notas,

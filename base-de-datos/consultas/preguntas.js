@@ -16,10 +16,10 @@ const listarTodas = db.prepare(`${SELECCION} ${ORDEN}`);
 const listarActivas = db.prepare(`${SELECCION} WHERE p.activa = 1 ${ORDEN}`);
 const buscarPorId = db.prepare(`${SELECCION} WHERE p.id = ?`);
 const listarAlternativas = db.prepare(
-  'SELECT id, pregunta_id, alternativa, score FROM alternativas ORDER BY orden, id'
+  'SELECT id, pregunta_id, alternativa, score, es_otro FROM alternativas ORDER BY orden, id'
 );
 const alternativasDe = db.prepare(
-  'SELECT id, pregunta_id, alternativa, score FROM alternativas WHERE pregunta_id = ? ORDER BY orden, id'
+  'SELECT id, pregunta_id, alternativa, score, es_otro FROM alternativas WHERE pregunta_id = ? ORDER BY orden, id'
 );
 const buscarArea = db.prepare('SELECT id FROM areas WHERE id = ?');
 const ultimoOrden = db.prepare(
@@ -37,7 +37,7 @@ const borrar = db.prepare('DELETE FROM preguntas WHERE id = ?');
 const asignarOrden = db.prepare('UPDATE preguntas SET orden = ? WHERE id = ? AND area_id = ?');
 const borrarAlternativas = db.prepare('DELETE FROM alternativas WHERE pregunta_id = ?');
 const insertarAlternativa = db.prepare(
-  'INSERT INTO alternativas (pregunta_id, alternativa, score, orden) VALUES (?, ?, ?, ?)'
+  'INSERT INTO alternativas (pregunta_id, alternativa, score, orden, es_otro) VALUES (?, ?, ?, ?, ?)'
 );
 
 function armar(filas, alternativas, ponderaciones = []) {
@@ -52,7 +52,7 @@ function armar(filas, alternativas, ponderaciones = []) {
     orden: fila.orden,
     alternativas: alternativas
       .filter((alternativa) => alternativa.pregunta_id === fila.id)
-      .map(({ id, alternativa, score }) => ({ id, alternativa, score })),
+      .map(({ id, alternativa, score, es_otro }) => ({ id, alternativa, score, es_otro: Boolean(es_otro) })),
     ponderaciones: ponderaciones
       .filter((rango) => rango.pregunta_id === fila.id)
       .map(({ id, minimo, maximo, valor }) => ({ id, minimo, maximo, valor }))
@@ -123,8 +123,13 @@ function validar(datos) {
 
     alternativas = lista.map((item, indice) => ({
       alternativa: texto(item && item.alternativa, `la alternativa ${indice + 1}`, { max: 200 }),
-      score: entero(item && item.score, `el score de la alternativa ${indice + 1}`)
+      score: entero(item && item.score, `el score de la alternativa ${indice + 1}`),
+      es_otro: Boolean(item && item.es_otro) ? 1 : 0
     }));
+
+    if (alternativas.filter((item) => item.es_otro).length > 1) {
+      throw new ErrorApi('Solo una alternativa puede ser la opción "Otro"');
+    }
 
     if (tipo === 'multiple') {
       const sumaMaxima = alternativas.reduce(
@@ -148,8 +153,8 @@ function validar(datos) {
 
 function guardarAlternativas(preguntaId, alternativas) {
   borrarAlternativas.run(preguntaId);
-  alternativas.forEach(({ alternativa, score }, posicion) => {
-    insertarAlternativa.run(preguntaId, alternativa, score, posicion + 1);
+  alternativas.forEach(({ alternativa, score, es_otro }, posicion) => {
+    insertarAlternativa.run(preguntaId, alternativa, score, posicion + 1, es_otro);
   });
 }
 
@@ -166,7 +171,7 @@ export function obtenerPreguntasPublicas() {
     pregunta: pregunta.pregunta,
     tipo: pregunta.tipo,
     obligatoria: pregunta.obligatoria,
-    alternativas: pregunta.alternativas.map(({ id, alternativa }) => ({ id, alternativa }))
+    alternativas: pregunta.alternativas.map(({ id, alternativa, es_otro }) => ({ id, alternativa, es_otro }))
   }));
 }
 

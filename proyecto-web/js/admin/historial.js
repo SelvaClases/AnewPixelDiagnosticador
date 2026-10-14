@@ -8,7 +8,28 @@ import {
 } from '../consultas.js';
 import { TIPOS_PREGUNTA } from '../diagnostico.js';
 import { crear, formatearFecha, plural } from '../utilidades.js';
-import { avisar, boton, campo, confirmar, ejecutar, entrada, formularioModal } from './interfaz.js';
+import { abrirModal, avisar, boton, campo, confirmar, ejecutar, entrada, formularioModal } from './interfaz.js';
+
+const PAISES = {
+  MX: '🇲🇽 México',
+  PE: '🇵🇪 Perú'
+};
+
+const etiquetaPais = (pais) => PAISES[pais] || (pais ? pais : '—');
+
+function chipPerfil(perfil) {
+  if (!perfil || perfil.indice < 0) {
+    return crear('span', 'secundario', '—');
+  }
+
+  const chip = crear('span', 'chip chip-perfil', undefined, {
+    title: `Total ${perfil.total} · ${perfil.titulo}`,
+    style: `--color-nivel: ${perfil.color}`
+  });
+
+  chip.append(crear('strong', '', String(perfil.score)), crear('span', '', perfil.nombre));
+  return chip;
+}
 
 let contenedorTabla;
 let busqueda = '';
@@ -46,6 +67,8 @@ export async function montar(contenedor) {
 }
 
 async function pintarTabla() {
+  if (!contenedorTabla) return;
+
   const registros = await listarDiagnosticos(busqueda);
 
   if (!registros.length) {
@@ -61,7 +84,7 @@ async function pintarTabla() {
   const titulos = crear('tr');
   const envoltura = crear('div', 'tabla-envoltura');
 
-  ['Fecha', 'Persona', 'Contacto', 'Niveles', 'Origen', ''].forEach((titulo) => {
+  ['Fecha', 'Persona', 'Contacto', 'Niveles', 'Perfil', 'Origen', 'País', ''].forEach((titulo) => {
     titulos.append(crear('th', '', titulo));
   });
   encabezado.append(titulos);
@@ -78,7 +101,9 @@ function filaRegistro(registro) {
   const persona = crear('td');
   const contacto = crear('td', 'celda-contacto');
   const niveles = crear('td', 'niveles-lista');
+  const perfil = crear('td');
   const origen = crear('td');
+  const pais = crear('td', 'nowrap', etiquetaPais(registro.pais));
   const acciones = crear('td', 'acciones-tabla');
 
   persona.append(crear('strong', '', registro.nombre));
@@ -90,6 +115,8 @@ function filaRegistro(registro) {
   registro.areas.forEach((area) => {
     niveles.append(crear('span', 'pastilla', `${area.input}/${area.maximo}`, { title: area.area }));
   });
+
+  perfil.append(chipPerfil(registro.perfil));
 
   origen.append(
     crear(
@@ -109,7 +136,9 @@ function filaRegistro(registro) {
     persona,
     contacto,
     niveles,
+    perfil,
     origen,
+    pais,
     acciones
   );
 
@@ -129,6 +158,7 @@ async function borrarRegistro(registro) {
 function camposPersona(datos = {}) {
   const nombre = entrada('text', datos.nombre || '', { maxlength: 120, required: '' });
   const empresa = entrada('text', datos.empresa || '', { maxlength: 120 });
+  const rubro = entrada('text', datos.rubro || '', { maxlength: 120 });
   const correo = entrada('email', datos.correo || '', { maxlength: 160 });
   const telefono = entrada('tel', datos.telefono || '', { maxlength: 40 });
   const notas = crear('textarea', 'entrada', undefined, { rows: 3, maxlength: 2000 });
@@ -138,6 +168,7 @@ function camposPersona(datos = {}) {
   rejilla.append(
     campo('Nombre *', nombre),
     campo('Empresa', empresa),
+    campo('Rubro', rubro),
     campo('Correo', correo),
     campo('Teléfono', telefono)
   );
@@ -147,6 +178,7 @@ function camposPersona(datos = {}) {
     leer: () => ({
       nombre: nombre.value,
       empresa: empresa.value,
+      rubro: rubro.value,
       correo: correo.value,
       telefono: telefono.value,
       notas: notas.value
@@ -154,38 +186,128 @@ function camposPersona(datos = {}) {
   };
 }
 
-async function verDetalle(id) {
+function vistaPersonaSoloLectura(datos) {
+  const rejilla = crear('div', 'rejilla');
+
+  [
+    ['Nombre', datos.nombre],
+    ['Empresa', datos.empresa],
+    ['Rubro', datos.rubro],
+    ['Correo', datos.correo],
+    ['Teléfono', datos.telefono]
+  ].forEach(([etiqueta, valor]) => {
+    const dato = crear('div', 'campo');
+    dato.append(crear('span', 'campo-etiqueta', etiqueta), crear('p', 'dato-lectura', valor || '—'));
+    rejilla.append(dato);
+  });
+
+  const notas = crear('div', 'campo');
+  notas.append(crear('span', 'campo-etiqueta', 'Notas del seguimiento'), crear('p', 'dato-lectura', datos.notas || '—'));
+
+  return [rejilla, notas];
+}
+
+export async function verDetalle(id) {
   const registro = await ejecutar(() => obtenerDiagnostico(id));
 
   if (!registro) return;
 
-  const persona = camposPersona(registro);
-  const cuerpo = crear('div', 'campos');
-  const origen = registro.origen === 'manual' ? 'Registro manual' : 'Formulario web';
+  let editando = false;
+  let personaEditable = null;
 
-  cuerpo.append(
-    crear('p', 'ayuda', `Registrado el ${formatearFecha(registro.creado_en)} · ${origen}`),
-    ...persona.elementos,
-    seccionResultados(registro.areas),
-    seccionRespuestas(registro)
-  );
+  const origen = registro.origen === 'manual' ? 'Registro manual' : 'Formulario web';
+  const detalle = registro.pais
+    ? `Registrado el ${formatearFecha(registro.creado_en)} · ${origen} · ${etiquetaPais(registro.pais)}`
+    : `Registrado el ${formatearFecha(registro.creado_en)} · ${origen}`;
+
+  const seccionPersona = crear('div', 'campos');
+  const cuerpo = crear('div', 'campos');
+  const contenido = crear('div', 'modal-cuerpo');
+  const formulario = crear('form', 'modal-contenido');
+  const error = crear('p', 'error-modal', undefined, { role: 'alert' });
+  const izquierda = crear('div', 'pie-izquierda');
+  const pie = crear('footer', 'modal-pie');
+  const guardar = crear('button', 'boton boton-primario', 'Guardar cambios', { type: 'submit' });
+
+  error.hidden = true;
+
+  function pintarPersona() {
+    if (editando) {
+      personaEditable = camposPersona(registro);
+      seccionPersona.replaceChildren(...personaEditable.elementos);
+    } else {
+      personaEditable = null;
+      seccionPersona.replaceChildren(...vistaPersonaSoloLectura(registro));
+    }
+  }
 
   const eliminar = boton('Eliminar registro', 'boton-peligro', async () => {
     if (await borrarRegistro(registro)) modal.cerrar();
   });
+  const editar = boton('✎ Editar datos', 'boton-secundario', () => {
+    editando = true;
+    pintarPersona();
+    pintarPie();
+  });
+  const cancelarEdicion = boton('Cancelar edición', 'boton-secundario', () => {
+    editando = false;
+    error.hidden = true;
+    pintarPersona();
+    pintarPie();
+  });
+  const cerrar = boton('Cerrar', 'boton-secundario', () => modal.cerrar());
 
-  const modal = formularioModal({
-    titulo: registro.nombre,
-    ancho: 820,
-    cuerpo,
-    textoGuardar: 'Guardar cambios',
-    extras: [eliminar],
-    alGuardar: async () => {
-      await actualizarDiagnostico(registro.id, persona.leer());
+  function pintarPie() {
+    izquierda.replaceChildren(eliminar);
+    pie.replaceChildren(error, izquierda, ...(editando ? [cancelarEdicion, guardar] : [editar, cerrar]));
+  }
+
+  pintarPersona();
+  pintarPie();
+
+  cuerpo.append(
+    crear('p', 'ayuda', detalle),
+    seccionPerfil(registro.perfil),
+    seccionPersona,
+    seccionResultados(registro.areas),
+    seccionRespuestas(registro)
+  );
+  contenido.append(cuerpo);
+  formulario.append(contenido, pie);
+
+  const modal = abrirModal({ titulo: registro.nombre, cuerpo: formulario, ancho: 820 });
+
+  formulario.addEventListener('submit', async (evento) => {
+    evento.preventDefault();
+    if (!editando || !personaEditable) return;
+
+    error.hidden = true;
+    guardar.disabled = true;
+
+    try {
+      const datos = personaEditable.leer();
+      await actualizarDiagnostico(registro.id, datos);
+      Object.assign(registro, datos);
       await pintarTabla();
       avisar('Registro actualizado');
+      editando = false;
+      pintarPersona();
+      pintarPie();
+    } catch (fallo) {
+      error.textContent = fallo.message;
+      error.hidden = false;
+    } finally {
+      guardar.disabled = false;
     }
   });
+}
+
+function seccionPerfil(perfil) {
+  const seccion = crear('div', 'perfil-detalle');
+
+  seccion.append(crear('span', 'campo-etiqueta', 'Perfil según la puntuación'), chipPerfil(perfil));
+  if (perfil && perfil.titulo) seccion.append(crear('small', 'secundario', perfil.titulo));
+  return seccion;
 }
 
 function seccionResultados(areas) {
