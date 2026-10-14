@@ -1,15 +1,18 @@
 import { crear } from '../utilidades.js';
 import * as orden from './orden.js';
 import * as niveles from './niveles.js';
-import * as agradecimientos from './pantallaFinal.js';
+// import * as agradecimientos from './pantallaFinal.js'; // desactivada, ver nota abajo
 import * as redes from './redes.js';
 import { crearVistaPrevia } from './vistaPrevia.js';
 
 // Todo lo que arma las pantallas del cliente, en el orden en que las recorre.
+// "Agradecimientos" está oculta: esa pantalla no se usa en el sitio por ahora (el flujo
+// termina en el diagnóstico). Su código y su configuración siguen intactos; para reactivarla,
+// descomenta el import de arriba y esta línea:
+//   { clave: 'agradecimientos', nombre: 'Agradecimientos', vista: agradecimientos, vistaPrevia: true },
 const PAGINAS = [
   { clave: 'orden', nombre: 'Orden del formulario', vista: orden },
   { clave: 'niveles', nombre: 'Niveles del resultado', vista: niveles, vistaPrevia: true },
-  { clave: 'agradecimientos', nombre: 'Agradecimientos', vista: agradecimientos, vistaPrevia: true },
   { clave: 'redes', nombre: 'Redes sociales', vista: redes, vistaPrevia: true }
 ];
 

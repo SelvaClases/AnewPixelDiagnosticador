@@ -1,5 +1,11 @@
 import { crear } from '../utilidades.js';
-import { obtenerRedesSociales, actualizarRedesSociales, obtenerPantallaFinal } from '../consultas.js';
+import {
+  obtenerRedesSociales,
+  actualizarRedesSociales,
+  obtenerPantallaFinal,
+  actualizarPantallaFinal,
+  listarNiveles
+} from '../consultas.js';
 import { NOMBRES_RED, iconoRed } from '../iconosRedes.js';
 import { campo, entrada, boton, ejecutar } from './interfaz.js';
 import { redesVisibles } from './vistaPrevia.js';
@@ -48,12 +54,21 @@ const OPCIONES = {
 };
 
 export async function montar(contenedor, { vistaPrevia } = {}) {
-  const [{ redes, estilo }, pantalla] = await Promise.all([obtenerRedesSociales(), obtenerPantallaFinal()]);
+  const [{ redes, estilo }, pantalla, niveles] = await Promise.all([
+    obtenerRedesSociales(),
+    obtenerPantallaFinal(),
+    listarNiveles().catch(() => [])
+  ]);
+
+  // Un nivel cualquiera, solo para que la vista previa se vea como la pantalla real
+  // de diagnóstico (el contenido del nivel no se guarda desde aquí).
+  const nivelDeMuestra = niveles[0] || null;
 
   const disenio = seccionDisenio(estilo);
   const lista = seccionRedes(redes);
+  const tituloRedes = entrada('text', pantalla.redes_titulo, { maxlength: 120, placeholder: 'Síguenos para conocernos más' });
 
-  const leer = () => ({ redes: lista.leer(), estilo: disenio.leer() });
+  const leer = () => ({ redes: lista.leer(), estilo: disenio.leer(), redesTitulo: tituloRedes.value });
 
   const barra = crear('div', 'barra');
   const titulos = crear('div');
@@ -63,7 +78,11 @@ export async function montar(contenedor, { vistaPrevia } = {}) {
 
   const guardar = boton('Guardar cambios', 'boton-primario', async () => {
     const datos = leer();
-    const resultado = await ejecutar(() => actualizarRedesSociales(datos.redes, datos.estilo), 'Cambios guardados');
+    const resultado = await ejecutar(async () => {
+      const redesGuardadas = await actualizarRedesSociales(datos.redes, datos.estilo);
+      await actualizarPantallaFinal({ ...pantalla, redes_titulo: datos.redesTitulo });
+      return redesGuardadas;
+    }, 'Cambios guardados');
     if (resultado) {
       guardado = JSON.stringify(datos);
       revisarPendiente();
@@ -78,21 +97,26 @@ export async function montar(contenedor, { vistaPrevia } = {}) {
 
   titulos.append(
     crear('h2', '', 'Redes sociales'),
-    crear('p', 'ayuda', 'Botones de la pantalla de agradecimiento. Elige su diseño y qué redes mostrar; la vista previa muestra cómo quedará.')
+    crear('p', 'ayuda', 'Botones que se muestran debajo de "Volver a hacer el test", en la pantalla de diagnóstico. Elige su diseño y qué redes mostrar; la vista previa muestra cómo quedará.')
   );
   acciones.append(pendiente, guardar);
   barra.append(titulos, acciones);
 
-  contenedor.replaceChildren(barra, disenio.elemento, lista.elemento);
+  const bloqueTitulo = bloque('Título sobre las redes');
+  bloqueTitulo.append(campo('Texto', tituloRedes, 'Va justo arriba de los botones. Déjalo vacío para ocultarlo.'));
+
+  contenedor.replaceChildren(barra, disenio.elemento, bloqueTitulo, lista.elemento);
 
   const alCambiar = () => {
     disenio.actualizarVisibles();
     revisarPendiente();
-    if (vistaPrevia) {
+    if (vistaPrevia && nivelDeMuestra) {
       const datos = leer();
       vistaPrevia.mostrar({
-        tipo: 'agradecimiento',
-        pantalla: { ...pantalla, redes: redesVisibles(datos.redes), redes_estilo: datos.estilo }
+        tipo: 'resumen',
+        nivel: nivelDeMuestra,
+        fraccion: 1,
+        redes: { redes: redesVisibles(datos.redes), redes_estilo: datos.estilo, redes_titulo: datos.redesTitulo }
       });
     }
   };

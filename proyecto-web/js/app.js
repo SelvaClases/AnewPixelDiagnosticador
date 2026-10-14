@@ -315,6 +315,9 @@ function activarVistaPrevia() {
 
     if (tipo === 'resumen') {
       pintarResumen(evento.data.nivel, evento.data.fraccion);
+      // La vista previa de Redes sociales manda sus datos sobre este mismo "resumen",
+      // porque ahora es donde se muestran de verdad (ya no en la pantalla de agradecimiento).
+      if (evento.data.redes) pintarRedesResumen(evento.data.redes);
       mostrarSiCambia('resumen');
     } else if (tipo === 'agradecimiento') {
       pintarAgradecimiento(evento.data.pantalla);
