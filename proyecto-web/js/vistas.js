@@ -269,14 +269,7 @@ export function mostrarPantalla(nombre) {
 
   if (nombre === 'resumen' || nombre === 'contacto') {
     activarParallaxResumen();
-    activarHumoResumen();
-
-    // El humo solo va en el formulario de contacto (en la pantalla de resultado no).
-    const destino = $('contacto');
-    if (nombre === 'contacto' && humoCanvas && humoCanvas.parentElement !== destino) {
-      destino.insertBefore(humoCanvas, destino.querySelector('.columna'));
-      ajustarTamanoHumo();
-    }
+    // El humo se quitó de todas las pantallas (antes vivía aquí, en "contacto").
   }
 
   window.scrollTo(0, 0);
@@ -700,7 +693,6 @@ export function pintarResumen(nivel, fraccion = 1) {
   const plantillaIcono = $('plantilla-oportunidad');
 
   activarParallaxResumen();
-  activarHumoResumen();
 
   $('resumen-vehiculo').src = 'assets/astronauta.png';
   $('resumen-vehiculo').style.left = `${Math.min(1, Math.max(0, fraccion)) * 100}%`;
